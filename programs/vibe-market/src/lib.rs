@@ -3,7 +3,7 @@ use anchor_lang::solana_program::{
     system_program,
 };
 use anchor_spl::token::{
-    self, transfer, TokenAccount, Transfer, Token
+    self, transfer, TokenAccount, Transfer, Token, Mint
 };
 use anchor_spl::associated_token::{
     self, AssociatedToken,
@@ -92,61 +92,61 @@ pub mod vibe_market {
         let next_list_item = &mut ctx.accounts.next_list_item;
         next_list_item.prev_list_item = ctx.accounts.new_item.to_account_info().key();
 
-        // let new_item = &mut ctx.accounts.new_item;
-        // new_item.collection = ctx.accounts.collection.to_account_info().key();
-        // new_item.next_list_item = ctx.accounts.next_list_item.to_account_info().key();
-        // new_item.prev_list_item = ctx.accounts.list_head.to_account_info().key();
-        // new_item.token_account = ctx.accounts.program_nft_account.to_account_info().key();
+        let new_item = &mut ctx.accounts.new_item;
+        new_item.collection = list_head.collection;
+        new_item.next_list_item = ctx.accounts.next_list_item.to_account_info().key();
+        new_item.prev_list_item = ctx.accounts.list_head.to_account_info().key();
+        new_item.token_account = ctx.accounts.program_nft_account.to_account_info().key();
         
-        // let cpi_program = ctx.accounts.token_program.to_account_info();
-        // let cpi_accounts = Transfer {
-        //     from: ctx.accounts.admin_nft_account.to_account_info(),
-        //     to: ctx.accounts.program_nft_account.to_account_info(),
-        //     authority: ctx.accounts.admin.to_account_info(),
-        // };
-        // let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        // transfer(cpi_ctx, 1)?;
-
-        Ok(())
-    }
-
-    pub fn purchase_nft(
-        ctx: Context<PurchaseNft>,
-    ) -> ProgramResult {
-        let collection = &ctx.accounts.collection;
-        let payment_mint = &ctx.accounts.payment_mint;
-
-        let sale_price_option = collection.sale_prices.iter().find(|sp| sp.mint == payment_mint.key());
-        let sale_price = match sale_price_option {
-            Some(sale_price) => sale_price,
-            None => return Err(ErrorCode::InvalidPurchaseMint.into())
-        };
-
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_accounts = Transfer {
-            from: ctx.accounts.payment_account.to_account_info(),
-            to: ctx.accounts.program_credit_account.to_account_info(),
-            authority: ctx.accounts.user.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        transfer(cpi_ctx, sale_price.amount)?;
-
-        let prev_list_item = &mut ctx.accounts.prev_list_item;
-        let next_list_item = &mut ctx.accounts.next_list_item;
-        prev_list_item.next_list_item = next_list_item.to_account_info().key();
-        next_list_item.prev_list_item = prev_list_item.to_account_info().key();
-
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.program_nft_account.to_account_info(),
-            to: ctx.accounts.user_nft_account.to_account_info(),
-            authority: ctx.accounts.global_state.to_account_info(),
+            from: ctx.accounts.admin_nft_account.to_account_info(),
+            to: ctx.accounts.program_nft_account.to_account_info(),
+            authority: ctx.accounts.admin.to_account_info(),
         };
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         transfer(cpi_ctx, 1)?;
 
         Ok(())
     }
+
+    // pub fn purchase_nft(
+    //     ctx: Context<PurchaseNft>,
+    // ) -> ProgramResult {
+    //     let collection = &ctx.accounts.collection;
+    //     let payment_mint = &ctx.accounts.payment_mint;
+
+    //     let sale_price_option = collection.sale_prices.iter().find(|sp| sp.mint == payment_mint.key());
+    //     let sale_price = match sale_price_option {
+    //         Some(sale_price) => sale_price,
+    //         None => return Err(ErrorCode::InvalidPurchaseMint.into())
+    //     };
+
+    //     let cpi_program = ctx.accounts.token_program.to_account_info();
+    //     let cpi_accounts = Transfer {
+    //         from: ctx.accounts.payment_account.to_account_info(),
+    //         to: ctx.accounts.program_credit_account.to_account_info(),
+    //         authority: ctx.accounts.user.to_account_info(),
+    //     };
+    //     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+    //     transfer(cpi_ctx, sale_price.amount)?;
+
+    //     let prev_list_item = &mut ctx.accounts.prev_list_item;
+    //     let next_list_item = &mut ctx.accounts.next_list_item;
+    //     prev_list_item.next_list_item = next_list_item.to_account_info().key();
+    //     next_list_item.prev_list_item = prev_list_item.to_account_info().key();
+
+    //     let cpi_program = ctx.accounts.token_program.to_account_info();
+    //     let cpi_accounts = Transfer {
+    //         from: ctx.accounts.program_nft_account.to_account_info(),
+    //         to: ctx.accounts.user_nft_account.to_account_info(),
+    //         authority: ctx.accounts.global_state.to_account_info(),
+    //     };
+    //     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+    //     transfer(cpi_ctx, 1)?;
+
+    //     Ok(())
+    // }
 }
 
 /************************/
@@ -261,31 +261,31 @@ pub struct AddNft<'info> {
         ],
         bump = global_state.nonce
     )]
-    global_state: Account<'info, GlobalState>,
-    #[account(address = list_head.collection)]
-    collection: Account<'info, Collection>,
+    global_state: Box<Account<'info, GlobalState>>,
     #[account(mut)]
-    list_head: Account<'info, TokenAccountWrapper>,
+    list_head: Box<Account<'info, TokenAccountWrapper>>,
     #[account(
         mut,
         address = list_head.next_list_item
     )]
-    next_list_item: Account<'info, TokenAccountWrapper>,
+    next_list_item: Box<Account<'info, TokenAccountWrapper>>,
     #[account(
         init,
         payer = admin,
+        space = 8 + TokenAccountWrapper::LEN
     )]
-    new_item: Account<'info, TokenAccountWrapper>,
-    admin_nft_account: Account<'info, TokenAccount>,
+    new_item: Box<Account<'info, TokenAccountWrapper>>,
+    #[account(mut)]
+    admin_nft_account: Box<Account<'info, TokenAccount>>,
     #[account(address = admin_nft_account.mint)]
-    admin_nft_mint: Account<'info, TokenAccount>,
+    admin_nft_mint: Box<Account<'info, Mint>>,
     #[account(
         init_if_needed,
         payer = admin,
 	    associated_token::mint = admin_nft_mint,
         associated_token::authority = global_state,
     )]
-    program_nft_account: Account<'info, TokenAccount>,
+    program_nft_account: Box<Account<'info, TokenAccount>>,
     #[account(address = associated_token::ID)]
     associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
@@ -295,59 +295,59 @@ pub struct AddNft<'info> {
     rent: Sysvar<'info, Rent>,
 }
 
-#[derive(Accounts)]
-pub struct PurchaseNft<'info> {
-    user: Signer<'info>,
-    #[account(
-        seeds = [
-            b"global".as_ref(),
-        ],
-        bump = global_state.nonce
-    )]
-    global_state: Account<'info, GlobalState>,
-    #[account(mut)]
-    purchase_list_item: Account<'info, TokenAccountWrapper>,
-    #[account(
-        mut,
-        address = purchase_list_item.next_list_item
-    )]
-    next_list_item: Account<'info, TokenAccountWrapper>,
-    #[account(
-        mut,
-        address = purchase_list_item.next_list_item
-    )]
-    prev_list_item: Account<'info, TokenAccountWrapper>,
-    #[account(address = purchase_list_item.collection)]
-    collection: Account<'info, Collection>,
-    #[account(address = purchase_list_item.token_account)]
-    program_nft_account: Account<'info, TokenAccount>,
-    #[account(address = program_nft_account.mint)]
-    program_nft_mint: Account<'info, TokenAccount>,
-    #[account(
-        init_if_needed,
-        payer = user,
-	    associated_token::mint = program_nft_mint,
-        associated_token::authority = user,
-    )]
-    user_nft_account: Account<'info, TokenAccount>,
-    payment_account: Account<'info, TokenAccount>,
-    #[account(address = payment_account.mint)]
-    payment_mint: Account<'info, TokenAccount>,
-    #[account(
-        init_if_needed,
-        payer = user,
-	    associated_token::mint = payment_mint,
-        associated_token::authority = global_state,
-    )]
-    program_credit_account: Account<'info, TokenAccount>,
-    #[account(address = associated_token::ID)]
-    associated_token_program: Program<'info, AssociatedToken>,
-    #[account(address = token::ID)]
-    token_program: Program<'info, Token>,
-    #[account(address = system_program::ID)]
-    system_program: Program<'info, System>,
-    rent: Sysvar<'info, Rent>,
-}
+// #[derive(Accounts)]
+// pub struct PurchaseNft<'info> {
+//     user: Signer<'info>,
+//     #[account(
+//         seeds = [
+//             b"global".as_ref(),
+//         ],
+//         bump = global_state.nonce
+//     )]
+//     global_state: Account<'info, GlobalState>,
+//     #[account(mut)]
+//     purchase_list_item: Account<'info, TokenAccountWrapper>,
+//     #[account(
+//         mut,
+//         address = purchase_list_item.next_list_item
+//     )]
+//     next_list_item: Account<'info, TokenAccountWrapper>,
+//     #[account(
+//         mut,
+//         address = purchase_list_item.next_list_item
+//     )]
+//     prev_list_item: Account<'info, TokenAccountWrapper>,
+//     #[account(address = purchase_list_item.collection)]
+//     collection: Account<'info, Collection>,
+//     #[account(address = purchase_list_item.token_account)]
+//     program_nft_account: Account<'info, TokenAccount>,
+//     #[account(address = program_nft_account.mint)]
+//     program_nft_mint: Account<'info, TokenAccount>,
+//     #[account(
+//         init_if_needed,
+//         payer = user,
+// 	    associated_token::mint = program_nft_mint,
+//         associated_token::authority = user,
+//     )]
+//     user_nft_account: Account<'info, TokenAccount>,
+//     payment_account: Account<'info, TokenAccount>,
+//     #[account(address = payment_account.mint)]
+//     payment_mint: Account<'info, TokenAccount>,
+//     #[account(
+//         init_if_needed,
+//         payer = user,
+// 	    associated_token::mint = payment_mint,
+//         associated_token::authority = global_state,
+//     )]
+//     program_credit_account: Account<'info, TokenAccount>,
+//     #[account(address = associated_token::ID)]
+//     associated_token_program: Program<'info, AssociatedToken>,
+//     #[account(address = token::ID)]
+//     token_program: Program<'info, Token>,
+//     #[account(address = system_program::ID)]
+//     system_program: Program<'info, System>,
+//     rent: Sysvar<'info, Rent>,
+// }
 
 /*******************/
 /* DATA STRUCTURES */
@@ -417,6 +417,10 @@ pub struct TokenAccountWrapper {
     pub collection: Pubkey,
     pub prev_list_item: Pubkey,
     pub next_list_item: Pubkey,
+}
+
+impl TokenAccountWrapper {
+    pub const LEN: usize = 1 + 32 + 32 + 32 + 32;
 }
 
 #[derive(
