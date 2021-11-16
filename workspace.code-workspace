@@ -8,6 +8,9 @@
     },
     {
       "path": "../../eiventures/anchor"
+    },
+    {
+      "path": "../pancake-toolkit/packages/pancake-uikit"
     }
   ],
   "settings": {}
