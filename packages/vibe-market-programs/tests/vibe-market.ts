@@ -215,6 +215,24 @@ describe("vibe-market", () => {
         admin.publicKey,
         admin.publicKey
       )
+
+    const programAssociatedAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      mintAddress.publicKey,
+      globalStateAddress,
+      true
+    )
+
+    // const createProgramTokenAccount =
+    //   await Token.createAssociatedTokenAccountInstruction(
+    //     ASSOCIATED_TOKEN_PROGRAM_ID,
+    //     TOKEN_PROGRAM_ID,
+    //     mintAddress.publicKey,
+    //     programAssociatedAddress,
+    //     globalStateAddress,
+    //     admin.publicKey
+    //   )
     const mintToIx = await Token.createMintToInstruction(
       TOKEN_PROGRAM_ID,
       mintAddress.publicKey,
@@ -227,21 +245,15 @@ describe("vibe-market", () => {
       createAccountIx,
       createNftMintIx,
       createAdminTokenAccountIx,
+      // createProgramTokenAccount,
       mintToIx
     )
     const txSign = await program.provider.send(tx, [mintAddress])
 
-    const programAssociatedAddress = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      mintAddress.publicKey,
-      globalStateAddress,
-      true
-    )
-
     const listHead = await program.account.tokenAccountWrapper.fetch(
       listHeadAddress
     )
+    console.log("listHead", listHead)
 
     await program.rpc.addNft({
       accounts: {
