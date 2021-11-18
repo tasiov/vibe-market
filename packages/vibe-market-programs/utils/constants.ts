@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js"
 
-export const vibeMarketProgram = new PublicKey(
-  "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+export const vibeMarketProgramId = new PublicKey(
+  "A3RM1Z9JW6JiTNheD4JcjnE9qLGLk9phgv8GfszEyE8L"
 )

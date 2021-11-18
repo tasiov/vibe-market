@@ -9,106 +9,122 @@ use anchor_spl::associated_token::{
     self, AssociatedToken,
 };
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("A3RM1Z9JW6JiTNheD4JcjnE9qLGLk9phgv8GfszEyE8L");
 
 #[program]
 pub mod vibe_market {
     use super::*;
-    pub fn initialize(ctx: Context<Initialize>, nonce: u8) -> ProgramResult {
+    pub fn init_global_state(ctx: Context<InitGlobalState>, nonce: u8) -> ProgramResult {
         let global_state = &mut ctx.accounts.global_state;
-        global_state.whitelist = vec!(ctx.accounts.admin.key());
         global_state.nonce = nonce;
         Ok(())
     }
 
-    #[access_control(
-        GlobalState::is_valid_admin(&ctx.accounts.global_state, ctx.accounts.admin.key)
-    )]
-    pub fn add_admin(ctx: Context<AddAdmin>) -> ProgramResult {
+    pub fn init_market(ctx: Context<InitMarket>, nonce: u8) -> ProgramResult {
         let global_state = &mut ctx.accounts.global_state;
-        global_state.whitelist.push(ctx.accounts.new_admin.key());
+        global_state.num_markets = global_state
+            .num_markets
+            .checked_add(1)
+            .ok_or_else(|| ErrorCode::Overflow)?;
+        
+        let market = &mut ctx.accounts.market;
+        market.whitelist = vec!(ctx.accounts.admin.key());
+        market.nonce = nonce;
         Ok(())
     }
 
     #[access_control(
-        GlobalState::is_valid_admin(&ctx.accounts.global_state, ctx.accounts.admin.key)
+        Market::is_valid_admin(&ctx.accounts.market, ctx.accounts.admin.key)
+    )]
+    pub fn add_admin(ctx: Context<AddAdmin>) -> ProgramResult {
+        let market = &mut ctx.accounts.market;
+        market.whitelist.push(ctx.accounts.add_admin.key());
+        Ok(())
+    }
+
+    #[access_control(
+        Market::is_valid_admin(&ctx.accounts.market, ctx.accounts.admin.key)
     )]
     pub fn remove_admin(ctx: Context<RemoveAdmin>) -> ProgramResult {
-        if ctx.accounts.admin.key() == ctx.accounts.remove_admin.key() {
+        let market = &mut ctx.accounts.market;
+        let remove_admin_key = &ctx.accounts.remove_admin.key();
+
+        if ctx.accounts.admin.key() == *remove_admin_key {
             return Err(ErrorCode::CannotRemoveSelf.into());
         };
+        if !market.whitelist.contains(remove_admin_key) {
+            return Err(ErrorCode::AdminNotFound.into());
+        };
 
-        let remove_admin_key = &ctx.accounts.remove_admin.key();
-        let global_state = &mut ctx.accounts.global_state;
-        global_state.whitelist = global_state.whitelist.clone().into_iter()
+        market.whitelist = market.whitelist.clone().into_iter()
             .filter(|p| p != remove_admin_key).collect();
 
         Ok(())
     }
 
-    #[access_control(
-        GlobalState::is_valid_admin(&ctx.accounts.global_state, ctx.accounts.admin.key)
-    )]
-    pub fn init_collection(
-        ctx: Context<InitCollection>,
-        collection_nonce: u8,
-        list_head_nonce: u8,
-        list_tail_nonce: u8,
-        title: String,
-        sale_prices: Vec<SalePrice>,
-    ) -> ProgramResult {
-        let global_state = &mut ctx.accounts.global_state;
-        global_state.num_collections += 1;
+    // #[access_control(
+    //     GlobalState::is_valid_admin(&ctx.accounts.global_state, ctx.accounts.admin.key)
+    // )]
+    // pub fn init_collection(
+    //     ctx: Context<InitCollection>,
+    //     collection_nonce: u8,
+    //     list_head_nonce: u8,
+    //     list_tail_nonce: u8,
+    //     title: String,
+    //     sale_prices: Vec<SalePrice>,
+    // ) -> ProgramResult {
+    //     let global_state = &mut ctx.accounts.global_state;
+    //     global_state.num_collections += 1;
 
-        let collection = &mut ctx.accounts.collection;
-        collection.title = title;
-        collection.sale_prices = sale_prices;
-        collection.nonce = collection_nonce;
-        collection.list_head = ctx.accounts.list_head.to_account_info().key();
-        collection.list_tail = ctx.accounts.list_tail.to_account_info().key();
+    //     let collection = &mut ctx.accounts.collection;
+    //     collection.title = title;
+    //     collection.sale_prices = sale_prices;
+    //     collection.nonce = collection_nonce;
+    //     collection.list_head = ctx.accounts.list_head.to_account_info().key();
+    //     collection.list_tail = ctx.accounts.list_tail.to_account_info().key();
 
-        let list_head = &mut ctx.accounts.list_head;
-        list_head.next_list_item = ctx.accounts.list_tail.to_account_info().key();
-        list_head.collection = collection.to_account_info().key();
-        list_head.nonce = list_head_nonce;
+    //     let list_head = &mut ctx.accounts.list_head;
+    //     list_head.next_list_item = ctx.accounts.list_tail.to_account_info().key();
+    //     list_head.collection = collection.to_account_info().key();
+    //     list_head.nonce = list_head_nonce;
 
-        let list_tail = &mut ctx.accounts.list_tail;
-        list_tail.prev_list_item = ctx.accounts.list_head.to_account_info().key();
-        list_tail.collection = collection.to_account_info().key();
-        list_tail.nonce = list_tail_nonce;
+    //     let list_tail = &mut ctx.accounts.list_tail;
+    //     list_tail.prev_list_item = ctx.accounts.list_head.to_account_info().key();
+    //     list_tail.collection = collection.to_account_info().key();
+    //     list_tail.nonce = list_tail_nonce;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    #[access_control(
-        GlobalState::is_valid_admin(&ctx.accounts.global_state, ctx.accounts.admin.key)
-    )]
-    pub fn add_nft(
-        ctx: Context<AddNft>,
-    ) -> ProgramResult {
-        let list_head = &mut ctx.accounts.list_head;
-        list_head.next_list_item = ctx.accounts.new_item.to_account_info().key();
+    // #[access_control(
+    //     GlobalState::is_valid_admin(&ctx.accounts.global_state, ctx.accounts.admin.key)
+    // )]
+    // pub fn add_nft(
+    //     ctx: Context<AddNft>,
+    // ) -> ProgramResult {
+    //     let list_head = &mut ctx.accounts.list_head;
+    //     list_head.next_list_item = ctx.accounts.new_item.to_account_info().key();
 
-        let next_list_item = &mut ctx.accounts.next_list_item;
-        next_list_item.prev_list_item = ctx.accounts.new_item.to_account_info().key();
+    //     let next_list_item = &mut ctx.accounts.next_list_item;
+    //     next_list_item.prev_list_item = ctx.accounts.new_item.to_account_info().key();
 
-        let new_item = &mut ctx.accounts.new_item;
-        new_item.collection = list_head.collection;
-        new_item.next_list_item = ctx.accounts.next_list_item.to_account_info().key();
-        new_item.prev_list_item = ctx.accounts.list_head.to_account_info().key();
-        new_item.token_account = ctx.accounts.program_nft_account.to_account_info().key();
+    //     let new_item = &mut ctx.accounts.new_item;
+    //     new_item.collection = list_head.collection;
+    //     new_item.next_list_item = ctx.accounts.next_list_item.to_account_info().key();
+    //     new_item.prev_list_item = ctx.accounts.list_head.to_account_info().key();
+    //     new_item.token_account = ctx.accounts.program_nft_account.to_account_info().key();
         
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.admin_nft_account.to_account_info(),
-            to: ctx.accounts.program_nft_account.to_account_info(),
-            authority: ctx.accounts.admin.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        transfer(cpi_ctx, 1)?;
+    //     let cpi_program = ctx.accounts.token_program.to_account_info();
+    //     let cpi_accounts = Transfer {
+    //         from: ctx.accounts.admin_nft_account.to_account_info(),
+    //         to: ctx.accounts.program_nft_account.to_account_info(),
+    //         authority: ctx.accounts.admin.to_account_info(),
+    //     };
+    //     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+    //     transfer(cpi_ctx, 1)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     // pub fn purchase_nft(
     //     ctx: Context<PurchaseNft>,
@@ -157,7 +173,7 @@ pub mod vibe_market {
 #[instruction(
     nonce: u8
 )]
-pub struct Initialize<'info> {
+pub struct InitGlobalState<'info> {
     admin: Signer<'info>,
     #[account(
         init,
@@ -169,88 +185,98 @@ pub struct Initialize<'info> {
     )]
     global_state: Account<'info, GlobalState>,
     #[account(address = system_program::ID)]
-    system_program: UncheckedAccount<'info>,
-}
-
-#[derive(Accounts)]
-pub struct AddAdmin<'info> {
-    admin: Signer<'info>,
-    #[account(
-        mut,
-        seeds = [
-            b"global".as_ref(),
-        ],
-        bump = global_state.nonce
-    )]
-    global_state: Account<'info, GlobalState>,
-    new_admin: UncheckedAccount<'info>,
-}
-
-#[derive(Accounts)]
-pub struct RemoveAdmin<'info> {
-    admin: Signer<'info>,
-    #[account(
-        mut,
-        seeds = [
-            b"global".as_ref(),
-        ],
-        bump = global_state.nonce
-    )]
-    global_state: Account<'info, GlobalState>,
-    remove_admin: UncheckedAccount<'info>,
+    system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 #[instruction(
-    collection_nonce: u8,
-    list_head_nonce: u8,
-    list_tail_nonce: u8,
-    title: String,
-    sale_prices: Vec<SalePrice>,
+    nonce: u8
 )]
-pub struct InitCollection<'info> {
+pub struct InitMarket<'info> {
     admin: Signer<'info>,
-    #[account(
-        mut,
-        seeds = [
-            b"global".as_ref(),
-        ],
-        bump = global_state.nonce
-    )]
+    #[account(mut)]
     global_state: Account<'info, GlobalState>,
     #[account(
         init,
         seeds = [
             global_state.to_account_info().key.as_ref(),
-            &global_state.num_collections.to_le_bytes(),
+            &global_state.num_markets.to_le_bytes(),
         ],
-        bump = collection_nonce,
-        payer = admin
-    )]
-    collection: Account<'info, Collection>,
-    #[account(
-        init,
-        seeds = [
-            collection.to_account_info().key.as_ref(),
-            b"head".as_ref(),
-        ],
-        bump = list_head_nonce,
+        bump = nonce,
         payer = admin,
     )]
-    list_head: Account<'info, TokenAccountWrapper>,
-    #[account(
-        init,
-        seeds = [
-            collection.to_account_info().key.as_ref(),
-            b"tail".as_ref(),
-        ],
-        bump = list_tail_nonce,
-        payer = admin,
-    )]
-    list_tail: Account<'info, TokenAccountWrapper>,
+    market: Account<'info, Market>,
     #[account(address = system_program::ID)]
     system_program: Program<'info, System>,
 }
+
+#[derive(Accounts)]
+pub struct AddAdmin<'info> {
+    admin: Signer<'info>,
+    #[account(mut)]
+    market: Account<'info, Market>,
+    add_admin: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
+pub struct RemoveAdmin<'info> {
+    admin: Signer<'info>,
+    #[account(mut)]
+    market: Account<'info, Market>,
+    remove_admin: UncheckedAccount<'info>,
+}
+
+// #[derive(Accounts)]
+// #[instruction(
+//     collection_nonce: u8,
+//     list_head_nonce: u8,
+//     list_tail_nonce: u8,
+//     title: String,
+//     sale_prices: Vec<SalePrice>,
+// )]
+// pub struct InitCollection<'info> {
+//     admin: Signer<'info>,
+//     #[account(
+//         mut,
+//         seeds = [
+//             b"global".as_ref(),
+//         ],
+//         bump = global_state.nonce
+//     )]
+//     global_state: Account<'info, GlobalState>,
+//     #[account(
+//         init,
+//         seeds = [
+//             global_state.to_account_info().key.as_ref(),
+//             &global_state.num_collections.to_le_bytes(),
+//         ],
+//         bump = collection_nonce,
+//         payer = admin
+//     )]
+//     collection: Account<'info, Collection>,
+//     #[account(
+//         init,
+//         seeds = [
+//             collection.to_account_info().key.as_ref(),
+//             b"head".as_ref(),
+//         ],
+//         bump = list_head_nonce,
+//         payer = admin,
+//     )]
+//     list_head: Account<'info, TokenAccountWrapper>,
+//     #[account(
+//         init,
+//         seeds = [
+//             collection.to_account_info().key.as_ref(),
+//             b"tail".as_ref(),
+//         ],
+//         bump = list_tail_nonce,
+//         payer = admin,
+//     )]
+//     list_tail: Account<'info, TokenAccountWrapper>,
+//     #[account(address = system_program::ID)]
+//     system_program: Program<'info, System>,
+// }
 
 #[derive(Accounts)]
 pub struct AddNft<'info> {
@@ -354,28 +380,35 @@ pub struct AddNft<'info> {
 /*******************/
 
 #[account]
+#[derive(Default)]
 pub struct GlobalState {
     pub nonce: u8,
-    pub whitelist: Vec<Pubkey>,
-    pub num_collections: u32,
+    pub num_markets: u32,
 }
 
-impl GlobalState {
-    fn is_valid_admin(global_state: &GlobalState, admin: &Pubkey) -> Result<()> {
-        if !global_state.whitelist.contains(&admin) {
+#[account]
+pub struct Market {
+    pub nonce: u8,
+    pub whitelist: Vec<Pubkey>,
+    pub num_collections: u64,
+}
+
+impl Market {
+    fn is_valid_admin(market: &Market, admin: &Pubkey) -> Result<()> {
+        if !market.whitelist.contains(&admin) {
             return Err(ErrorCode::Unauthorized.into());
         };
         return Ok(())
     }
 }
 
-impl Default for GlobalState {
+impl Default for Market {
     fn default() -> Self {
-        GlobalState {
+        Market {
             nonce: 0,
             whitelist: vec![
                 Pubkey::default();
-                8
+                16
             ],
             num_collections: 0,
         }
@@ -441,4 +474,8 @@ pub enum ErrorCode {
     CannotRemoveSelf,
     #[msg("Cannot purchase from selected collection with specified Mint.")]
     InvalidPurchaseMint,
+    #[msg("Overflow when applying an arithmetic operation.")]
+    Overflow,
+    #[msg("Admin address was not found in market whitelist.")]
+    AdminNotFound,
 }

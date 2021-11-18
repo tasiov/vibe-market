@@ -1,9 +1,22 @@
 import { PublicKey } from "@solana/web3.js"
 import * as anchor from "@project-serum/anchor"
-import { vibeMarketProgram } from "./constants"
+import { vibeMarketProgramId } from "./constants"
 
-export const getGlobalStateAddress = () =>
-  PublicKey.findProgramAddress([Buffer.from("global")], vibeMarketProgram)
+export const getGlobalStateAddress = () => {
+  return PublicKey.findProgramAddress(
+    [Buffer.from("global")],
+    vibeMarketProgramId
+  )
+}
+
+export const getMarketAddress = (
+  globalStateAddress: PublicKey,
+  index: number
+) =>
+  anchor.web3.PublicKey.findProgramAddress(
+    [globalStateAddress.toBuffer(), new anchor.BN(index).toBuffer("le", 4)],
+    vibeMarketProgramId
+  )
 
 export const getCollectionAddress = (
   globalStateAddress: PublicKey,
@@ -11,17 +24,17 @@ export const getCollectionAddress = (
 ) =>
   PublicKey.findProgramAddress(
     [globalStateAddress.toBuffer(), new anchor.BN(index).toBuffer("le", 4)],
-    vibeMarketProgram
+    vibeMarketProgramId
   )
 
 export const getListHeadAddress = (collectionAddress: PublicKey) =>
   PublicKey.findProgramAddress(
     [collectionAddress.toBuffer(), Buffer.from("head")],
-    vibeMarketProgram
+    vibeMarketProgramId
   )
 
 export const getListTailAddress = (collectionAddress: PublicKey) =>
   PublicKey.findProgramAddress(
     [collectionAddress.toBuffer(), Buffer.from("tail")],
-    vibeMarketProgram
+    vibeMarketProgramId
   )
