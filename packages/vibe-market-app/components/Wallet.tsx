@@ -5,12 +5,12 @@ import {
 } from "@solana/wallet-adapter-react-ui"
 
 // Default styles that can be overridden by your app
-require("@solana/wallet-adapter-react-ui/styles.css")
+import "@solana/wallet-adapter-react-ui/styles.css"
 
 export const Wallet: FC = () => {
   return (
     <WalletModalProvider>
-      <WalletMultiButton />
+      <WalletMultiButton style={{ backgroundColor: "#8333fe" }} />
     </WalletModalProvider>
   )
 }

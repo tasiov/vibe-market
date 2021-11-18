@@ -1,8 +1,15 @@
-import "../styles/globals.css"
+import { ReactNode, useState, useEffect } from "react"
 import type { AppProps } from "next/app"
 import dynamic from "next/dynamic"
 import { ChakraProvider } from "@chakra-ui/react"
+import { useConnection } from "@solana/wallet-adapter-react"
+import { useAnchorWallet } from "@solana/wallet-adapter-react"
+import { Program, Provider } from "@project-serum/anchor"
+import AnchorAccountCacheProvider from "../contexts/AnchorAccountsCacheProvider"
+import { ClusterContextProvider } from "../contexts/cluster"
+import { getVibeMarketProgram } from "../solana/getPrograms"
 import { theme } from "../styles/theme"
+import "../styles/globals.css"
 
 const WalletConnectionProvider = dynamic(
   () => import("../contexts/walletConnectionProvider"),
@@ -11,12 +18,43 @@ const WalletConnectionProvider = dynamic(
   }
 )
 
+const AccountsCacheProvidersSetup = ({ children }: { children: ReactNode }) => {
+  const { connection } = useConnection()
+  const wallet = useAnchorWallet()
+  const [vibeMarketProgram, setVibeMarketProgram] = useState<Program | null>(
+    null
+  )
+
+  useEffect(() => {
+    ;(async function () {
+      // @ts-ignore - calling provider without wallet is used to instantiate connection
+      const provider = new Provider(connection, wallet, {})
+      const vibeMarketProgram = await getVibeMarketProgram(provider)
+      setVibeMarketProgram(vibeMarketProgram)
+    })()
+  }, [wallet?.publicKey.toString()])
+
+  if (!vibeMarketProgram) {
+    return <>{children}</>
+  }
+
+  return (
+    <AnchorAccountCacheProvider vibeMarketProgram={vibeMarketProgram}>
+      {children}
+    </AnchorAccountCacheProvider>
+  )
+}
+
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ChakraProvider theme={theme}>
-      <WalletConnectionProvider>
-        <Component {...pageProps} />
-      </WalletConnectionProvider>
+      <ClusterContextProvider>
+        <WalletConnectionProvider>
+          <AccountsCacheProvidersSetup>
+            <Component {...pageProps} />
+          </AccountsCacheProvidersSetup>
+        </WalletConnectionProvider>
+      </ClusterContextProvider>
     </ChakraProvider>
   )
 }

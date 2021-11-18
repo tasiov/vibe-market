@@ -3,6 +3,7 @@ import Head from "next/head"
 import Image from "next/image"
 import styles from "../styles/Home.module.css"
 import NavBar from "../components/NavBar"
+import SidebarWithHeader from "../components/Layout"
 
 const Home: NextPage = () => {
   return (
@@ -16,7 +17,7 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <NavBar />
+      <SidebarWithHeader>test</SidebarWithHeader>
     </div>
   )
 }

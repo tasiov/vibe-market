@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   useColorModeValue,
-  useBreakpointValue,
+  Badge,
   useDisclosure,
 } from "@chakra-ui/react"
 import {
@@ -23,9 +23,13 @@ import {
   ChevronRightIcon,
 } from "@chakra-ui/icons"
 import { Wallet } from "./Wallet"
+import { useIsAdmin } from "../hooks/useIsAdmin"
+import { getClusterConstants } from "../constants"
 
-export default function NavBar() {
+const NavBar = () => {
   const { isOpen, onToggle } = useDisclosure()
+  const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
+  const isAdmin = useIsAdmin(ADDRESS_VIBE_MARKET)
 
   return (
     <Box>
@@ -66,6 +70,11 @@ export default function NavBar() {
           </Flex>
         </Flex>
 
+        {isAdmin && (
+          <Badge mr="10" fontSize="1em" colorScheme="red">
+            ADMIN
+          </Badge>
+        )}
         <Wallet />
       </Flex>
 
@@ -237,3 +246,5 @@ interface NavItem {
 }
 
 const NAV_ITEMS: Array<NavItem> = []
+
+export default NavBar
