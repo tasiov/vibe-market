@@ -6,8 +6,8 @@ export const theme = extendTheme({
       100: "#fbe389",
     },
     brandPurp: {
-      100: "#7f00ff",
-      900: "#df00ff",
+      100: "#df00ff",
+      900: "#7f00ff",
     },
   },
 })

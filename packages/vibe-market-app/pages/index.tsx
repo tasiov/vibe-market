@@ -6,20 +6,7 @@ import NavBar from "../components/NavBar"
 import SidebarWithHeader from "../components/Layout"
 
 const Home: NextPage = () => {
-  return (
-    <div>
-      <Head>
-        <title>Vibe Market</title>
-        <meta
-          name="description"
-          content="An NFT marketplace for the Vibe community"
-        />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <SidebarWithHeader>test</SidebarWithHeader>
-    </div>
-  )
+  return <div>Home</div>
 }
 
 export default Home

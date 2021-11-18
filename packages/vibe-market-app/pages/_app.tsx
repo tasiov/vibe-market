@@ -8,6 +8,7 @@ import { Program, Provider } from "@project-serum/anchor"
 import AnchorAccountCacheProvider from "../contexts/AnchorAccountsCacheProvider"
 import { ClusterContextProvider } from "../contexts/cluster"
 import { getVibeMarketProgram } from "../solana/getPrograms"
+import SidebarWithHeader from "../components/Layout"
 import { theme } from "../styles/theme"
 import "../styles/globals.css"
 
@@ -45,13 +46,15 @@ const AccountsCacheProvidersSetup = ({ children }: { children: ReactNode }) => {
   )
 }
 
-function MyApp({ Component, pageProps }: AppProps) {
+function VibeMarketApp({ Component, pageProps }: AppProps) {
   return (
     <ChakraProvider theme={theme}>
       <ClusterContextProvider>
         <WalletConnectionProvider>
           <AccountsCacheProvidersSetup>
-            <Component {...pageProps} />
+            <SidebarWithHeader>
+              <Component {...pageProps} />
+            </SidebarWithHeader>
           </AccountsCacheProvidersSetup>
         </WalletConnectionProvider>
       </ClusterContextProvider>
@@ -59,4 +62,4 @@ function MyApp({ Component, pageProps }: AppProps) {
   )
 }
 
-export default MyApp
+export default VibeMarketApp
