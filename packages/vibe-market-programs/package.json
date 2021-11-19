@@ -15,8 +15,10 @@
     "typescript": "^4.3.5"
   },
   "scripts": {
+    "test": "anchor test --provider.cluster localnet",
     "migrate": "ANCHOR_WALLET=./devnet-wallet.json yarn ts-node .anchor/deploy.ts",
     "devnet-balance": "solana balance -u d ./devnet-wallet.json",
-    "devnet-airdrop": "solana airdrop 5 -u d ./devnet-wallet.json"
+    "devnet-airdrop": "solana airdrop 5 -u d ./devnet-wallet.json",
+    "devnet-deploy": "anchor deploy; anchor idl upgrade A3RM1Z9JW6JiTNheD4JcjnE9qLGLk9phgv8GfszEyE8L -f target/idl/vibe_market.json;"
   }
 }

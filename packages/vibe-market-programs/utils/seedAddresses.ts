@@ -18,12 +18,13 @@ export const getMarketAddress = (
     vibeMarketProgramId
   )
 
-export const getCollectionAddress = (
-  globalStateAddress: PublicKey,
-  index: number
-) =>
+export const getCollectionAddress = (marketAddress: PublicKey, index: number) =>
   PublicKey.findProgramAddress(
-    [globalStateAddress.toBuffer(), new anchor.BN(index).toBuffer("le", 4)],
+    [
+      marketAddress.toBuffer(),
+      new anchor.BN(index).toBuffer("le", 4),
+      Buffer.from("collection"),
+    ],
     vibeMarketProgramId
   )
 
@@ -36,5 +37,15 @@ export const getListHeadAddress = (collectionAddress: PublicKey) =>
 export const getListTailAddress = (collectionAddress: PublicKey) =>
   PublicKey.findProgramAddress(
     [collectionAddress.toBuffer(), Buffer.from("tail")],
+    vibeMarketProgramId
+  )
+
+export const getPriceModelAddress = (marketAddress: PublicKey, index: number) =>
+  PublicKey.findProgramAddress(
+    [
+      marketAddress.toBuffer(),
+      new anchor.BN(index).toBuffer("le", 4),
+      Buffer.from("price_model"),
+    ],
     vibeMarketProgramId
   )

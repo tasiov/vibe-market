@@ -20,6 +20,7 @@ import {
   getListHeadAddress,
   getListTailAddress,
   getMarketAddress,
+  getPriceModelAddress,
 } from "../utils/seedAddresses"
 
 describe("vibe-market", () => {
@@ -43,6 +44,8 @@ describe("vibe-market", () => {
   let listHeadAddressNonce: number
   let listTailAddress: PublicKey
   let listTailAddressNonce: number
+  let priceModelAddress: PublicKey
+  let priceModelAddressNonce: number
 
   it("Is initialized!", async () => {
     ;[globalStateAddress, globalStateAddressNonce] =
@@ -88,7 +91,9 @@ describe("vibe-market", () => {
       globalState.numMarkets
     )
 
-    await program.rpc.initMarket(marketAddressNonce, {
+    const title = "Vibe Market"
+
+    await program.rpc.initMarket(marketAddressNonce, title, {
       accounts: {
         admin: admin.publicKey,
         globalState: globalStateAddress,
@@ -102,12 +107,15 @@ describe("vibe-market", () => {
 
     const market = await program.account.market.fetch(marketAddress)
     assert.ok(market.nonce === marketAddressNonce)
-    assert.ok(market.numCollections.toNumber() === 0)
+    assert.ok(market.numCollections === 0)
+    assert.ok(market.numPriceModels === 0)
     assert.ok(
       market.whitelist
         .map((publicKey) => publicKey.toBase58())
         .includes(admin.publicKey.toBase58())
     )
+    assert.ok(market.title === title)
+    assert.ok(market.index === 0)
   })
 
   it("Allows admin to add new admin", async () => {
@@ -146,158 +154,215 @@ describe("vibe-market", () => {
     assert.ok(!whitelistStr.includes(admin2.publicKey.toBase58()))
   })
 
-  // it("Does not allow admin to remove self", async () => {
-  //   try {
-  //     await program.rpc.removeAdmin({
-  //       accounts: {
-  //         admin: admin.publicKey,
-  //         globalState: globalStateAddress,
-  //         removeAdmin: admin.publicKey,
-  //       },
-  //     })
-  //     assert.ok(false)
-  //   } catch (err) {
-  //     assert.ok(true)
-  //   }
+  it("Does not allow admin to remove self", async () => {
+    try {
+      await program.rpc.removeAdmin({
+        accounts: {
+          admin: admin.publicKey,
+          market: marketAddress,
+          removeAdmin: admin.publicKey,
+        },
+      })
+      assert.ok(false)
+    } catch (err) {
+      assert.ok(true)
+    }
 
-  //   const globalState = await program.account.globalState.fetch(
-  //     globalStateAddress
-  //   )
+    const market = await program.account.market.fetch(marketAddress)
 
-  //   const whitelistStr = globalState.whitelist.map((publicKey) =>
-  //     publicKey.toBase58()
-  //   )
-  //   assert.ok(whitelistStr.includes(admin.publicKey.toBase58()))
-  // })
+    const whitelistStr = market.whitelist.map((publicKey) =>
+      publicKey.toBase58()
+    )
+    assert.ok(whitelistStr.includes(admin.publicKey.toBase58()))
+  })
 
-  // it("Allows for collection creation", async () => {
-  //   ;[collectionAddress, collectionAddressNonce] = await getCollectionAddress(
-  //     globalStateAddress,
-  //     0
-  //   )
-  //   ;[listHeadAddress, listHeadAddressNonce] = await getListHeadAddress(
-  //     collectionAddress
-  //   )
-  //   ;[listTailAddress, listTailAddressNonce] = await getListTailAddress(
-  //     collectionAddress
-  //   )
+  it("Allows for collection creation", async () => {
+    const market = await program.account.market.fetch(marketAddress)
 
-  //   await program.rpc.initCollection(
-  //     collectionAddressNonce,
-  //     listHeadAddressNonce,
-  //     listTailAddressNonce,
-  //     "Collection A",
-  //     [{ mint: NATIVE_MINT, amount: new anchor.BN(10000) }],
-  //     {
-  //       accounts: {
-  //         admin: admin.publicKey,
-  //         globalState: globalStateAddress,
-  //         collection: collectionAddress,
-  //         listHead: listHeadAddress,
-  //         listTail: listTailAddress,
-  //         systemProgram: SystemProgram.programId,
-  //       },
-  //     }
-  //   )
+    ;[collectionAddress, collectionAddressNonce] = await getCollectionAddress(
+      marketAddress,
+      market.numCollections
+    )
+    ;[listHeadAddress, listHeadAddressNonce] = await getListHeadAddress(
+      collectionAddress
+    )
+    ;[listTailAddress, listTailAddressNonce] = await getListTailAddress(
+      collectionAddress
+    )
 
-  //   const collection = await program.account.collection.fetch(collectionAddress)
+    const title = "Collection A"
 
-  //   assert.ok(collection.title === "Collection A")
-  //   assert.ok(
-  //     collection.salePrices[0].mint.toBase58() === NATIVE_MINT.toBase58()
-  //   )
-  //   assert.ok(collection.listHead.toBase58() === listHeadAddress.toBase58())
-  //   assert.ok(collection.listTail.toBase58() === listTailAddress.toBase58())
-  // })
+    await program.rpc.initCollection(
+      collectionAddressNonce,
+      listHeadAddressNonce,
+      listTailAddressNonce,
+      title,
+      {
+        accounts: {
+          admin: admin.publicKey,
+          market: marketAddress,
+          collection: collectionAddress,
+          listHead: listHeadAddress,
+          listTail: listTailAddress,
+          systemProgram: SystemProgram.programId,
+        },
+      }
+    )
 
-  // it("Allows for nft addition", async () => {
-  //   const createAccountIx = await SystemProgram.createAccount({
-  //     fromPubkey: admin.publicKey,
-  //     newAccountPubkey: mintAddress.publicKey,
-  //     space: 82,
-  //     lamports:
-  //       await program.provider.connection.getMinimumBalanceForRentExemption(82),
-  //     programId: TOKEN_PROGRAM_ID,
-  //   })
-  //   const createNftMintIx = await Token.createInitMintInstruction(
-  //     TOKEN_PROGRAM_ID,
-  //     mintAddress.publicKey,
-  //     0,
-  //     admin.publicKey,
-  //     admin.publicKey
-  //   )
-  //   const adminAssociatedAddress = await Token.getAssociatedTokenAddress(
-  //     ASSOCIATED_TOKEN_PROGRAM_ID,
-  //     TOKEN_PROGRAM_ID,
-  //     mintAddress.publicKey,
-  //     admin.publicKey
-  //   )
-  //   const createAdminTokenAccountIx =
-  //     await Token.createAssociatedTokenAccountInstruction(
-  //       ASSOCIATED_TOKEN_PROGRAM_ID,
-  //       TOKEN_PROGRAM_ID,
-  //       mintAddress.publicKey,
-  //       adminAssociatedAddress,
-  //       admin.publicKey,
-  //       admin.publicKey
-  //     )
+    const collection = await program.account.collection.fetch(collectionAddress)
+    assert.ok(collection.listHead.toBase58() === listHeadAddress.toBase58())
+    assert.ok(collection.listTail.toBase58() === listTailAddress.toBase58())
+    assert.ok(collection.title === title)
+    assert.ok(collection.nonce === collectionAddressNonce)
+    assert.ok(collection.index === 0)
+  })
 
-  //   const programAssociatedAddress = await Token.getAssociatedTokenAddress(
-  //     ASSOCIATED_TOKEN_PROGRAM_ID,
-  //     TOKEN_PROGRAM_ID,
-  //     mintAddress.publicKey,
-  //     globalStateAddress,
-  //     true
-  //   )
+  it("Allows for price model creation", async () => {
+    const market = await program.account.market.fetch(marketAddress)
 
-  //   // const createProgramTokenAccount =
-  //   //   await Token.createAssociatedTokenAccountInstruction(
-  //   //     ASSOCIATED_TOKEN_PROGRAM_ID,
-  //   //     TOKEN_PROGRAM_ID,
-  //   //     mintAddress.publicKey,
-  //   //     programAssociatedAddress,
-  //   //     globalStateAddress,
-  //   //     admin.publicKey
-  //   //   )
-  //   const mintToIx = await Token.createMintToInstruction(
-  //     TOKEN_PROGRAM_ID,
-  //     mintAddress.publicKey,
-  //     adminAssociatedAddress,
-  //     admin.publicKey,
-  //     [],
-  //     1
-  //   )
-  //   const tx = new Transaction().add(
-  //     createAccountIx,
-  //     createNftMintIx,
-  //     createAdminTokenAccountIx,
-  //     // createProgramTokenAccount,
-  //     mintToIx
-  //   )
-  //   const txSign = await program.provider.send(tx, [mintAddress])
+    ;[priceModelAddress, priceModelAddressNonce] = await getPriceModelAddress(
+      marketAddress,
+      market.numPriceModels
+    )
 
-  //   const listHead = await program.account.tokenAccountWrapper.fetch(
-  //     listHeadAddress
-  //   )
-  //   console.log("listHead", listHead)
+    await program.rpc.initPriceModel(
+      priceModelAddressNonce,
+      [{ mint: NATIVE_MINT, amount: new anchor.BN(10000) }],
+      {
+        accounts: {
+          admin: admin.publicKey,
+          market: marketAddress,
+          priceModel: priceModelAddress,
+          systemProgram: SystemProgram.programId,
+        },
+      }
+    )
 
-  //   await program.rpc.addNft({
-  //     accounts: {
-  //       admin: admin.publicKey,
-  //       globalState: globalStateAddress,
-  //       collection: collectionAddress,
-  //       listHead: listHeadAddress,
-  //       nextListItem: listTailAddress,
-  //       newItem: nftItem.publicKey,
-  //       adminNftAccount: adminAssociatedAddress,
-  //       adminNftMint: mintAddress.publicKey,
-  //       programNftAccount: programAssociatedAddress,
-  //       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-  //       tokenProgram: TOKEN_PROGRAM_ID,
-  //       rent: SYSVAR_RENT_PUBKEY,
-  //       systemProgram: SystemProgram.programId,
-  //     },
-  //     signers: [nftItem],
-  //   })
-  // })
+    const priceModel = await program.account.priceModel.fetch(priceModelAddress)
+    assert.ok(priceModel.nonce === priceModelAddressNonce)
+    assert.ok(priceModel.index === 0)
+    assert.ok(
+      priceModel.salePrices[0].mint.toString() === NATIVE_MINT.toString()
+    )
+    assert.ok(priceModel.salePrices[0].amount.toNumber() === 10000)
+  })
+
+  it("Allows for nft addition", async () => {
+    const createAccountIx = await SystemProgram.createAccount({
+      fromPubkey: admin.publicKey,
+      newAccountPubkey: mintAddress.publicKey,
+      space: 82,
+      lamports:
+        await program.provider.connection.getMinimumBalanceForRentExemption(82),
+      programId: TOKEN_PROGRAM_ID,
+    })
+    const createNftMintIx = await Token.createInitMintInstruction(
+      TOKEN_PROGRAM_ID,
+      mintAddress.publicKey,
+      0,
+      admin.publicKey,
+      admin.publicKey
+    )
+    const adminAssociatedAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      mintAddress.publicKey,
+      admin.publicKey
+    )
+    const createAdminTokenAccountIx =
+      await Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mintAddress.publicKey,
+        adminAssociatedAddress,
+        admin.publicKey,
+        admin.publicKey
+      )
+
+    const programAssociatedAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      mintAddress.publicKey,
+      marketAddress,
+      true
+    )
+
+    const mintToIx = await Token.createMintToInstruction(
+      TOKEN_PROGRAM_ID,
+      mintAddress.publicKey,
+      adminAssociatedAddress,
+      admin.publicKey,
+      [],
+      1
+    )
+    const tx = new Transaction().add(
+      createAccountIx,
+      createNftMintIx,
+      createAdminTokenAccountIx,
+      mintToIx
+    )
+    const txSign = await program.provider.send(tx, [mintAddress])
+
+    const token = new Token(
+      program.provider.connection,
+      mintAddress.publicKey,
+      TOKEN_PROGRAM_ID,
+      admin2
+    )
+    let adminAccount = await token.getAccountInfo(adminAssociatedAddress)
+    assert.ok(adminAccount.amount.toNumber() === 1)
+
+    await program.rpc.addNft({
+      accounts: {
+        admin: admin.publicKey,
+        market: marketAddress,
+        collection: collectionAddress,
+        listHead: listHeadAddress,
+        nextListItem: listTailAddress,
+        newItem: nftItem.publicKey,
+        priceModel: priceModelAddress,
+        adminNftAccount: adminAssociatedAddress,
+        adminNftMint: mintAddress.publicKey,
+        programNftAccount: programAssociatedAddress,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+      },
+      signers: [nftItem],
+    })
+
+    adminAccount = await token.getAccountInfo(adminAssociatedAddress)
+    assert.ok(adminAccount.amount.toNumber() === 0)
+    let programAccount = await token.getAccountInfo(programAssociatedAddress)
+    assert.ok(programAccount.amount.toNumber() === 1)
+
+    const nftItemAccount = await program.account.tokenAccountWrapper.fetch(
+      nftItem.publicKey
+    )
+    assert.ok(nftItemAccount.nonce === 0)
+    assert.ok(
+      nftItemAccount.tokenAccount.toString() ===
+        programAssociatedAddress.toString()
+    )
+    assert.ok(
+      nftItemAccount.priceModel.toString() === priceModelAddress.toString()
+    )
+    assert.ok(
+      nftItemAccount.prevListItem.toString() === listHeadAddress.toString()
+    )
+    assert.ok(
+      nftItemAccount.nextListItem.toString() === listTailAddress.toString()
+    )
+    assert.ok(nftItemAccount.payer.toString() === admin.publicKey.toString())
+
+    const listHead = await program.account.tokenAccountWrapper.fetch(
+      listHeadAddress
+    )
+    assert.ok(listHead.nextListItem.toString() === nftItem.publicKey.toString())
+    const listTail = await program.account.tokenAccountWrapper.fetch(
+      listTailAddress
+    )
+    assert.ok(listTail.prevListItem.toString() === nftItem.publicKey.toString())
+  })
 })

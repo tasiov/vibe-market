@@ -24,7 +24,7 @@ const initMarket = async (vibeMarketProgram, walletPublicKey, marketIndex) => {
   const [marketAddress, marketAddressNonce] =
     await seedAddresses.getMarketAddress(globalStateAddress, marketIndex)
 
-  await vibeMarketProgram.rpc.initMarket(marketAddressNonce, {
+  await vibeMarketProgram.rpc.initMarket(marketAddressNonce, "Vibe Market", {
     accounts: {
       admin: walletPublicKey,
       globalState: globalStateAddress,
@@ -69,14 +69,14 @@ module.exports = async function (provider) {
   //   await vibeMarketProgram.account.globalState.fetch(globalStateAddress)
   // )
 
-  // const marketAddress = await initMarket(vibeMarketProgram, walletPublicKey, 0)
-  // console.log(await vibeMarketProgram.account.market.fetch(marketAddress))
+  const marketAddress = await initMarket(vibeMarketProgram, walletPublicKey, 2)
+  console.log(await vibeMarketProgram.account.market.fetch(marketAddress))
 
-  const [globalStateAddress, globalStateAddressNonce] =
-    await seedAddresses.getGlobalStateAddress()
+  // const [globalStateAddress, globalStateAddressNonce] =
+  //   await seedAddresses.getGlobalStateAddress()
 
-  const [marketAddress, marketAddressNonce] =
-    await seedAddresses.getMarketAddress(globalStateAddress, 0)
+  // const [marketAddress, marketAddressNonce] =
+  //   await seedAddresses.getMarketAddress(globalStateAddress, 0)
 
   console.log("marketAddress", marketAddress.toString())
 
