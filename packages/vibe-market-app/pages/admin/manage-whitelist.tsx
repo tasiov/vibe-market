@@ -4,7 +4,7 @@ import { Center, Box, Container, Flex } from "@chakra-ui/layout"
 import { useAccount } from "../../hooks/useAccounts"
 import { getClusterConstants } from "../../constants"
 
-const ManagerWhitelist = () => {
+const ManageWhitelist = () => {
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
   const market = useAccount("market", ADDRESS_VIBE_MARKET)
   return (
@@ -45,4 +45,4 @@ const ManagerWhitelist = () => {
   )
 }
 
-export default ManagerWhitelist
+export default ManageWhitelist

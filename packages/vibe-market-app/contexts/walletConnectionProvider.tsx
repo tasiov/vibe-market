@@ -1,8 +1,8 @@
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base"
 import {
   ConnectionProvider,
   WalletProvider,
-} from '@solana/wallet-adapter-react';
+} from "@solana/wallet-adapter-react"
 import {
   getSolletWallet,
   getSolongWallet,
@@ -10,34 +10,34 @@ import {
   getSolflareWallet,
   getSlopeWallet,
   getLedgerWallet,
-} from '@solana/wallet-adapter-wallets';
-import { useCluster, ClusterContextProvider } from './cluster';
-import { FC, useMemo } from 'react';
+} from "@solana/wallet-adapter-wallets"
+import { useCluster, ClusterContextProvider } from "./cluster"
+import { FC, useMemo } from "react"
 
 const RPC_POOL_CLUSTER_MAP = {
-  [WalletAdapterNetwork.Devnet]: 'https://hedgehog.devnet.rpcpool.com',
-  [WalletAdapterNetwork.Mainnet]: 'https://hedgehog.rpcpool.com ',
-};
+  [WalletAdapterNetwork.Devnet]: "https://hedgehog.devnet.rpcpool.com",
+  [WalletAdapterNetwork.Mainnet]: "https://hedgehog.rpcpool.com ",
+}
 
 const WalletConnectionProvider: FC = ({ children }) => {
-  const network = useCluster();
+  const network = useCluster()
 
   const endpoint = useMemo(
     () => RPC_POOL_CLUSTER_MAP[network as keyof typeof RPC_POOL_CLUSTER_MAP],
-    [network],
-  );
+    [network]
+  )
 
   const wallets = useMemo(
     () => [
-      getSolletWallet({ network }),
-      getSolongWallet(),
       getPhantomWallet(),
       getSolflareWallet(),
-      getSlopeWallet(),
       getLedgerWallet(),
+      getSolletWallet({ network }),
+      getSolongWallet(),
+      getSlopeWallet(),
     ],
-    [network],
-  );
+    [network]
+  )
 
   return (
     <ClusterContextProvider>
@@ -47,7 +47,7 @@ const WalletConnectionProvider: FC = ({ children }) => {
         </WalletProvider>
       </ConnectionProvider>
     </ClusterContextProvider>
-  );
-};
+  )
+}
 
-export default WalletConnectionProvider;
+export default WalletConnectionProvider

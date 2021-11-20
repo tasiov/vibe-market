@@ -16,8 +16,9 @@ import {
   FlexProps,
   Badge,
   Text,
+  useBreakpointValue,
 } from "@chakra-ui/react"
-import { FiAlignJustify, FiMenu } from "react-icons/fi"
+import { FiAlignJustify, FiMenu, FiLayers } from "react-icons/fi"
 import { IconType } from "react-icons"
 import { ReactText } from "react"
 import { Wallet } from "./Wallet"
@@ -27,10 +28,20 @@ import { getClusterConstants } from "../constants"
 interface LinkItemProps {
   name: string
   icon: IconType
+  href: string
 }
 
 const AdminLinkItems: Array<LinkItemProps> = [
-  { name: "Manage Whitelist", icon: FiAlignJustify },
+  {
+    name: "Manage Whitelist",
+    icon: FiAlignJustify,
+    href: "/admin/manage-whitelist",
+  },
+  {
+    name: "Create Collection",
+    icon: FiLayers,
+    href: "/admin/create-collection",
+  },
 ]
 
 export default function SidebarWithHeader({
@@ -61,9 +72,9 @@ export default function SidebarWithHeader({
       {/* mobilenav */}
       <MobileNav onOpen={onOpen} />
       <Box
-        w={{ base: "full", md: "75%", lg: "85%" }}
-        ml={{ base: 0, md: "25%", lg: "15%" }}
-        p="4"
+        w={{ base: "full", md: "75%", lg: "80%", xl: "85%" }}
+        ml={{ base: 0, md: "25%", lg: "20%", xl: "15%" }}
+        p="8"
         h="full"
         position="fixed"
         backgroundColor={useColorModeValue("orange.50", "gray.700")}
@@ -81,13 +92,18 @@ interface SidebarProps extends BoxProps {
 const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
   const isAdmin = useIsAdmin(ADDRESS_VIBE_MARKET)
+  const logoWidth =
+    useBreakpointValue({ base: 67, md: 134, lg: 167, xl: 167 }) || 201
+  const logoHeight =
+    useBreakpointValue({ base: 20, md: 40, lg: 50, xl: 50 }) || 60
+
   return (
     <Box
       transition="3s ease"
       bg={useColorModeValue("brandBg.100", "gray.900")}
       borderRight="1px"
       borderRightColor={useColorModeValue("gray.200", "gray.700")}
-      w={{ base: "full", md: "25%", lg: "15%" }}
+      w={{ base: "full", md: "25%", lg: "20%", xl: "15%" }}
       pos="fixed"
       h="full"
       {...rest}
@@ -101,8 +117,8 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
       >
         <Image
           src="/vibe-logo-lg.png"
-          width={201}
-          height={60}
+          width={logoWidth}
+          height={logoHeight}
           alt="Vibe Logo"
         />
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
@@ -119,12 +135,12 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
             borderBottom="2px"
             borderBottomColor={"black"}
           >
-            <Text fontSize="2xl" fontFamily="monospace" fontWeight="bold">
+            <Text fontSize="2xl" fontWeight="bold">
               Admin
             </Text>
           </Flex>
           {AdminLinkItems.map((link) => (
-            <NavItem key={link.name} icon={link.icon}>
+            <NavItem key={link.name} icon={link.icon} href={link.href}>
               {link.name}
             </NavItem>
           ))}
@@ -135,12 +151,13 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
 }
 
 interface NavItemProps extends FlexProps {
+  href: string
   icon: IconType
   children: ReactText
 }
-const NavItem = ({ icon, children, ...rest }: NavItemProps) => {
+const NavItem = ({ href, icon, children, ...rest }: NavItemProps) => {
   return (
-    <Link href="/admin/manage-whitelist" passHref>
+    <Link href={href} passHref>
       <Flex
         align="center"
         p="2"
@@ -151,8 +168,7 @@ const NavItem = ({ icon, children, ...rest }: NavItemProps) => {
         cursor="pointer"
         fontWeight="600"
         _hover={{
-          bg: "brandPurp.100",
-          color: "white",
+          color: "brandPurp.100",
         }}
         {...rest}
       >
@@ -161,7 +177,7 @@ const NavItem = ({ icon, children, ...rest }: NavItemProps) => {
             mr="4"
             fontSize="16"
             _groupHover={{
-              color: "white",
+              color: "brandPurp.100",
             }}
             as={icon}
           />
