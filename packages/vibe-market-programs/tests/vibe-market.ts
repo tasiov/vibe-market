@@ -6,6 +6,7 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
+  LAMPORTS_PER_SOL,
 } from "@solana/web3.js"
 import {
   NATIVE_MINT,
@@ -22,17 +23,24 @@ import {
   getMarketAddress,
   getPriceModelAddress,
 } from "../utils/seedAddresses"
+import {
+  airdropAccount,
+  createAdminNftMint,
+  createUserDebitAccount,
+} from "./testUtils"
 
 describe("vibe-market", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env())
 
   const program = anchor.workspace.VibeMarket as Program<VibeMarket>
+  const connection = program.provider.connection
   const admin = program.provider.wallet
   const admin2 = anchor.web3.Keypair.generate()
-  const mintAddress = anchor.web3.Keypair.generate()
-  const fauxPayer = anchor.web3.Keypair.generate()
-  const nftItem = anchor.web3.Keypair.generate()
+  const user = anchor.web3.Keypair.generate()
+  const nftMint = anchor.web3.Keypair.generate()
+  const paymentMint = anchor.web3.Keypair.generate()
+  const nftBucket = anchor.web3.Keypair.generate()
 
   let globalStateAddress: PublicKey
   let globalStateAddressNonce: number
@@ -46,6 +54,12 @@ describe("vibe-market", () => {
   let listTailAddressNonce: number
   let priceModelAddress: PublicKey
   let priceModelAddressNonce: number
+
+  before("vibe-market setup", async () => {
+    await airdropAccount(connection, user.publicKey)
+    await createAdminNftMint(program.provider, nftMint, admin.publicKey)
+    await createUserDebitAccount(program.provider, user, paymentMint)
+  })
 
   it("Is initialized!", async () => {
     ;[globalStateAddress, globalStateAddressNonce] =
@@ -227,7 +241,7 @@ describe("vibe-market", () => {
 
     await program.rpc.initPriceModel(
       priceModelAddressNonce,
-      [{ mint: NATIVE_MINT, amount: new anchor.BN(10000) }],
+      [{ mint: paymentMint.publicKey, amount: new anchor.BN(100) }],
       {
         accounts: {
           admin: admin.publicKey,
@@ -242,70 +256,30 @@ describe("vibe-market", () => {
     assert.ok(priceModel.nonce === priceModelAddressNonce)
     assert.ok(priceModel.index === 0)
     assert.ok(
-      priceModel.salePrices[0].mint.toString() === NATIVE_MINT.toString()
+      priceModel.salePrices[0].mint.toString() ===
+        paymentMint.publicKey.toString()
     )
-    assert.ok(priceModel.salePrices[0].amount.toNumber() === 10000)
+    assert.ok(priceModel.salePrices[0].amount.toNumber() === 100)
   })
 
   it("Allows for nft addition", async () => {
-    const createAccountIx = await SystemProgram.createAccount({
-      fromPubkey: admin.publicKey,
-      newAccountPubkey: mintAddress.publicKey,
-      space: 82,
-      lamports:
-        await program.provider.connection.getMinimumBalanceForRentExemption(82),
-      programId: TOKEN_PROGRAM_ID,
-    })
-    const createNftMintIx = await Token.createInitMintInstruction(
-      TOKEN_PROGRAM_ID,
-      mintAddress.publicKey,
-      0,
-      admin.publicKey,
-      admin.publicKey
-    )
     const adminAssociatedAddress = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
-      mintAddress.publicKey,
+      nftMint.publicKey,
       admin.publicKey
     )
-    const createAdminTokenAccountIx =
-      await Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mintAddress.publicKey,
-        adminAssociatedAddress,
-        admin.publicKey,
-        admin.publicKey
-      )
-
     const programAssociatedAddress = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
-      mintAddress.publicKey,
+      nftMint.publicKey,
       marketAddress,
       true
     )
 
-    const mintToIx = await Token.createMintToInstruction(
-      TOKEN_PROGRAM_ID,
-      mintAddress.publicKey,
-      adminAssociatedAddress,
-      admin.publicKey,
-      [],
-      1
-    )
-    const tx = new Transaction().add(
-      createAccountIx,
-      createNftMintIx,
-      createAdminTokenAccountIx,
-      mintToIx
-    )
-    const txSign = await program.provider.send(tx, [mintAddress])
-
     const token = new Token(
       program.provider.connection,
-      mintAddress.publicKey,
+      nftMint.publicKey,
       TOKEN_PROGRAM_ID,
       admin2
     )
@@ -319,17 +293,17 @@ describe("vibe-market", () => {
         collection: collectionAddress,
         listHead: listHeadAddress,
         nextListItem: listTailAddress,
-        newItem: nftItem.publicKey,
+        newItem: nftBucket.publicKey,
         priceModel: priceModelAddress,
         adminNftAccount: adminAssociatedAddress,
-        adminNftMint: mintAddress.publicKey,
+        adminNftMint: nftMint.publicKey,
         programNftAccount: programAssociatedAddress,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY,
       },
-      signers: [nftItem],
+      signers: [nftBucket],
     })
 
     adminAccount = await token.getAccountInfo(adminAssociatedAddress)
@@ -337,32 +311,141 @@ describe("vibe-market", () => {
     let programAccount = await token.getAccountInfo(programAssociatedAddress)
     assert.ok(programAccount.amount.toNumber() === 1)
 
-    const nftItemAccount = await program.account.tokenAccountWrapper.fetch(
-      nftItem.publicKey
+    const nftBucketAccount = await program.account.nftBucket.fetch(
+      nftBucket.publicKey
     )
-    assert.ok(nftItemAccount.nonce === 0)
+    assert.ok(nftBucketAccount.nonce === 0)
     assert.ok(
-      nftItemAccount.tokenAccount.toString() ===
+      nftBucketAccount.tokenAccount.toString() ===
         programAssociatedAddress.toString()
     )
     assert.ok(
-      nftItemAccount.priceModel.toString() === priceModelAddress.toString()
+      nftBucketAccount.priceModel.toString() === priceModelAddress.toString()
     )
     assert.ok(
-      nftItemAccount.prevListItem.toString() === listHeadAddress.toString()
+      nftBucketAccount.prevListItem.toString() === listHeadAddress.toString()
     )
     assert.ok(
-      nftItemAccount.nextListItem.toString() === listTailAddress.toString()
+      nftBucketAccount.nextListItem.toString() === listTailAddress.toString()
     )
-    assert.ok(nftItemAccount.payer.toString() === admin.publicKey.toString())
+    assert.ok(nftBucketAccount.payer.toString() === admin.publicKey.toString())
 
-    const listHead = await program.account.tokenAccountWrapper.fetch(
-      listHeadAddress
+    const listHead = await program.account.nftBucket.fetch(listHeadAddress)
+    assert.ok(
+      listHead.nextListItem.toString() === nftBucket.publicKey.toString()
     )
-    assert.ok(listHead.nextListItem.toString() === nftItem.publicKey.toString())
-    const listTail = await program.account.tokenAccountWrapper.fetch(
-      listTailAddress
+    const listTail = await program.account.nftBucket.fetch(listTailAddress)
+    assert.ok(
+      listTail.prevListItem.toString() === nftBucket.publicKey.toString()
     )
-    assert.ok(listTail.prevListItem.toString() === nftItem.publicKey.toString())
+  })
+
+  it("Allows for nft purchasing", async () => {
+    const userPaymentAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      paymentMint.publicKey,
+      user.publicKey
+    )
+    const userNftAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      nftMint.publicKey,
+      user.publicKey
+    )
+    const programCreditAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      paymentMint.publicKey,
+      marketAddress,
+      true
+    )
+    const programNftAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      nftMint.publicKey,
+      marketAddress,
+      true
+    )
+
+    const nftBucketAccount = await program.account.nftBucket.fetch(
+      nftBucket.publicKey
+    )
+
+    await program.rpc.purchaseNft({
+      accounts: {
+        owner: user.publicKey,
+        rentRefund: admin.publicKey,
+        priceModel: priceModelAddress,
+        globalState: globalStateAddress,
+        market: marketAddress,
+        purchaseListItem: nftBucket.publicKey,
+        debitMint: paymentMint.publicKey,
+        debitAccount: userPaymentAccountAddress,
+        programCreditAccount: programCreditAccountAddress,
+        programNftAccount: programNftAccountAddress,
+        programNftMint: nftMint.publicKey,
+        ownerNftAccount: userNftAccountAddress,
+        prevListItem: nftBucketAccount.prevListItem,
+        nextListItem: nftBucketAccount.nextListItem,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+      },
+      signers: [user],
+    })
+
+    try {
+      await program.account.nftBucket.fetch(nftBucket.publicKey)
+      assert.ok(false)
+    } catch (err) {
+      assert.ok(true)
+    }
+
+    const paymentToken = new Token(
+      connection,
+      paymentMint.publicKey,
+      TOKEN_PROGRAM_ID,
+      user
+    )
+    const userPaymentAccount = await paymentToken.getAccountInfo(
+      userPaymentAccountAddress
+    )
+    assert.ok(userPaymentAccount.amount.toNumber() === 10000 - 100)
+    const programCreditAccount = await paymentToken.getAccountInfo(
+      programCreditAccountAddress
+    )
+    assert.ok(programCreditAccount.amount.toNumber() === 100)
+
+    const nftToken = new Token(
+      connection,
+      nftMint.publicKey,
+      TOKEN_PROGRAM_ID,
+      user
+    )
+    const userNFtAccount = await nftToken.getAccountInfo(userNftAccountAddress)
+    assert.ok(userNFtAccount.amount.toNumber() === 1)
+    try {
+      await nftToken.getAccountInfo(programNftAccountAddress)
+      assert.ok(false)
+    } catch (err) {
+      assert.ok(true)
+    }
+
+    const prevListItem = await program.account.nftBucket.fetch(
+      nftBucketAccount.prevListItem
+    )
+    assert.ok(
+      prevListItem.nextListItem.toString() ===
+        nftBucketAccount.nextListItem.toString()
+    )
+    const nextListItem = await program.account.nftBucket.fetch(
+      nftBucketAccount.nextListItem
+    )
+    assert.ok(
+      nextListItem.prevListItem.toString() ===
+        nftBucketAccount.prevListItem.toString()
+    )
   })
 })
