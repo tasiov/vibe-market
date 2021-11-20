@@ -448,4 +448,49 @@ describe("vibe-market", () => {
         nftBucketAccount.prevListItem.toString()
     )
   })
+
+  it("Allows admins to withdraw liquidity", async () => {
+    const programPaymentAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      paymentMint.publicKey,
+      marketAddress,
+      true
+    )
+    const adminPaymentAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      paymentMint.publicKey,
+      admin.publicKey
+    )
+    await program.rpc.withdrawLiquidity(new anchor.BN(75), {
+      accounts: {
+        admin: admin.publicKey,
+        globalState: globalStateAddress,
+        market: marketAddress,
+        withdrawMint: paymentMint.publicKey,
+        programDebitAccount: programPaymentAccountAddress,
+        adminCreditAccount: adminPaymentAccountAddress,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+      },
+    })
+
+    const paymentToken = new Token(
+      connection,
+      paymentMint.publicKey,
+      TOKEN_PROGRAM_ID,
+      user
+    )
+    const programPaymentAccount = await paymentToken.getAccountInfo(
+      programPaymentAccountAddress
+    )
+    assert.ok(programPaymentAccount.amount.toNumber() === 25)
+    const adminPaymentAccount = await paymentToken.getAccountInfo(
+      adminPaymentAccountAddress
+    )
+    assert.ok(adminPaymentAccount.amount.toNumber() === 75)
+  })
 })

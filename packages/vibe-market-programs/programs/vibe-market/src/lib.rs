@@ -217,6 +217,32 @@ pub mod vibe_market {
 
         Ok(())
     }
+
+    #[access_control(
+        Market::is_valid_admin(&ctx.accounts.market, ctx.accounts.admin.key)
+    )]
+    pub fn withdraw_liquidity(
+        ctx: Context<WithdrawLiquidity>, amount: u64
+    ) -> ProgramResult {
+        let market = &ctx.accounts.market;
+        let global_state_key = ctx.accounts.global_state.to_account_info().key();
+        let seeds = &[
+            global_state_key.as_ref(),
+            &market.index.to_le_bytes(),
+            &[market.nonce],
+        ];
+        let signer = &[&seeds[..]];
+        
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.program_debit_account.to_account_info(),
+            to: ctx.accounts.admin_credit_account.to_account_info(),
+            authority: ctx.accounts.market.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+        transfer(cpi_ctx, amount)?;
+        Ok(())
+    }
 }
 
 /************************/
@@ -461,6 +487,47 @@ pub struct PurchaseNft<'info> {
         address = purchase_list_item.next_list_item
     )]
     next_list_item: Account<'info, NftBucket>,
+    #[account(address = associated_token::ID)]
+    associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
+    token_program: Program<'info, Token>,
+    #[account(address = system_program::ID)]
+    system_program: Program<'info, System>,
+    rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawLiquidity<'info> {
+    admin: Signer<'info>,
+    #[account(
+        seeds = [
+            b"global".as_ref(),
+        ],
+        bump = global_state.nonce,
+    )]
+    global_state: Box<Account<'info, GlobalState>>,
+    #[account(
+        seeds = [
+            global_state.to_account_info().key.as_ref(),
+            &market.index.to_le_bytes(),
+        ],
+        bump = market.nonce,
+    )]
+    market: Box<Account<'info, Market>>,
+    withdraw_mint: Box<Account<'info, Mint>>,
+    #[account(
+        mut,
+	    associated_token::mint = withdraw_mint,
+        associated_token::authority = market,
+    )]
+    program_debit_account: Box<Account<'info, TokenAccount>>,
+    #[account(
+        init_if_needed,
+        payer = admin,
+	    associated_token::mint = withdraw_mint,
+        associated_token::authority = admin,
+    )]
+    admin_credit_account: Box<Account<'info, TokenAccount>>,
     #[account(address = associated_token::ID)]
     associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]
