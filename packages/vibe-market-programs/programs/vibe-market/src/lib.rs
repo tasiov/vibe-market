@@ -9,7 +9,9 @@ use anchor_spl::associated_token::{
     self, AssociatedToken,
 };
 
-declare_id!("A3RM1Z9JW6JiTNheD4JcjnE9qLGLk9phgv8GfszEyE8L");
+declare_id!("VBMLwfUCFZHvsqTzTQKfgdJFQEWuKSVQZVdc9T2SqFf");
+
+const ADMIN_WHITELIST_MAX_LEN: usize = 16;
 
 #[program]
 pub mod vibe_market {
@@ -20,7 +22,7 @@ pub mod vibe_market {
         Ok(())
     }
 
-    pub fn init_market(ctx: Context<InitMarket>, nonce: u8, title: String) -> ProgramResult {
+    pub fn init_market(ctx: Context<InitMarket>, nonce: u8, whitelist: Vec<Pubkey>, title: String) -> ProgramResult {
         let global_state = &mut ctx.accounts.global_state;
         let market = &mut ctx.accounts.market;
         market.index = global_state.num_markets;
@@ -30,9 +32,14 @@ pub mod vibe_market {
             .checked_add(1)
             .ok_or_else(|| ErrorCode::Overflow)?;
         
-        market.whitelist = vec!(ctx.accounts.admin.key());
+        market.whitelist = whitelist;
         market.nonce = nonce;
         market.title = title;
+
+        if market.whitelist.len() > ADMIN_WHITELIST_MAX_LEN {
+            return Err(ErrorCode::AdminOutOfBounds.into());
+        }
+
         Ok(())
     }
 
@@ -42,6 +49,11 @@ pub mod vibe_market {
     pub fn add_admin(ctx: Context<AddAdmin>) -> ProgramResult {
         let market = &mut ctx.accounts.market;
         market.whitelist.push(ctx.accounts.add_admin.key());
+
+        if market.whitelist.len() > ADMIN_WHITELIST_MAX_LEN {
+            return Err(ErrorCode::AdminOutOfBounds.into());
+        }
+
         Ok(())
     }
 
@@ -271,6 +283,7 @@ pub struct InitGlobalState<'info> {
 #[derive(Accounts)]
 #[instruction(
     nonce: u8,
+    whitelist: Vec<Pubkey>,
     title: String,
 )]
 pub struct InitMarket<'info> {
@@ -559,7 +572,7 @@ pub struct Market {
 }
 
 impl Market {
-    pub const LEN: usize = 565;
+    pub const LEN: usize = 575;
 
     fn is_valid_admin(market: &Market, admin: &Pubkey) -> Result<()> {
         if !market.whitelist.contains(&admin) {
@@ -576,7 +589,7 @@ impl Default for Market {
             index: 0,
             whitelist: vec![
                 Pubkey::default();
-                16
+                ADMIN_WHITELIST_MAX_LEN
             ],
             num_collections: 0,
             num_price_models: 0,
@@ -595,7 +608,7 @@ pub struct Collection {
 }
 
 impl Collection {
-    pub const LEN: usize = 105;
+    pub const LEN: usize = 115;
 }
 
 impl Default for Collection {
@@ -634,7 +647,7 @@ pub struct PriceModel {
 }
 
 impl PriceModel {
-    pub const LEN: usize = 344;
+    pub const LEN: usize = 370;
 }
 
 impl Default for PriceModel {
@@ -676,4 +689,6 @@ pub enum ErrorCode {
     Overflow,
     #[msg("Admin address was not found in market whitelist.")]
     AdminNotFound,
+    #[msg("Admin whitelist exceeded max length of 16.")]
+    AdminOutOfBounds,
 }

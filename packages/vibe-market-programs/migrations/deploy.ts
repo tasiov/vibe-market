@@ -24,14 +24,19 @@ const initMarket = async (vibeMarketProgram, walletPublicKey, marketIndex) => {
   const [marketAddress, marketAddressNonce] =
     await seedAddresses.getMarketAddress(globalStateAddress, marketIndex)
 
-  await vibeMarketProgram.rpc.initMarket(marketAddressNonce, "Vibe Market", {
-    accounts: {
-      admin: walletPublicKey,
-      globalState: globalStateAddress,
-      market: marketAddress,
-      systemProgram: anchor.web3.SystemProgram.programId,
-    },
-  })
+  await vibeMarketProgram.rpc.initMarket(
+    marketAddressNonce,
+    [walletPublicKey],
+    "Vibe Market",
+    {
+      accounts: {
+        admin: walletPublicKey,
+        globalState: globalStateAddress,
+        market: marketAddress,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+    }
+  )
   return marketAddress
 }
 
@@ -60,34 +65,34 @@ module.exports = async function (provider) {
     provider
   )
 
-  // const globalStateAddress = await initGlobalState(
-  //   vibeMarketProgram,
-  //   walletPublicKey
-  // )
-
-  // console.log(
-  //   await vibeMarketProgram.account.globalState.fetch(globalStateAddress)
-  // )
-
-  const marketAddress = await initMarket(vibeMarketProgram, walletPublicKey, 2)
-  console.log(await vibeMarketProgram.account.market.fetch(marketAddress))
+  const globalStateAddress = await initGlobalState(
+    vibeMarketProgram,
+    walletPublicKey
+  )
 
   // const [globalStateAddress, globalStateAddressNonce] =
   //   await seedAddresses.getGlobalStateAddress()
 
+  console.log(
+    await vibeMarketProgram.account.globalState.fetch(globalStateAddress)
+  )
+  console.log("globalStateAddress", globalStateAddress.toString())
+
+  const marketAddress = await initMarket(vibeMarketProgram, walletPublicKey, 0)
+  console.log(await vibeMarketProgram.account.market.fetch(marketAddress))
+  console.log("marketAddress", marketAddress.toString())
+
   // const [marketAddress, marketAddressNonce] =
   //   await seedAddresses.getMarketAddress(globalStateAddress, 0)
 
-  console.log("marketAddress", marketAddress.toString())
+  await addAdmin(
+    vibeMarketProgram,
+    walletPublicKey,
+    marketAddress,
+    new PublicKey("GfP2U9noTRDNY3tVp9bicsnN34XX72rJ88eNjsaLih8x")
+  )
 
-  // await addAdmin(
-  //   vibeMarketProgram,
-  //   walletPublicKey,
-  //   marketAddress,
-  //   new PublicKey("GfP2U9noTRDNY3tVp9bicsnN34XX72rJ88eNjsaLih8x")
-  // )
+  const market = await vibeMarketProgram.account.market.fetch(marketAddress)
 
-  // const market = await vibeMarketProgram.account.market.fetch(marketAddress)
-
-  // console.log("market", market)
+  console.log("market", market)
 }

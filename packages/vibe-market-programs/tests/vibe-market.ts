@@ -1,15 +1,8 @@
 import { assert } from "chai"
 import * as anchor from "@project-serum/anchor"
 import { Program } from "@project-serum/anchor"
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import {
-  PublicKey,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  Transaction,
-  LAMPORTS_PER_SOL,
-} from "@solana/web3.js"
-import {
-  NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -106,8 +99,9 @@ describe("vibe-market", () => {
     )
 
     const title = "Vibe Market"
+    const whitelist = new Array(1).fill(new PublicKey(admin.publicKey))
 
-    await program.rpc.initMarket(marketAddressNonce, title, {
+    await program.rpc.initMarket(marketAddressNonce, whitelist, title, {
       accounts: {
         admin: admin.publicKey,
         globalState: globalStateAddress,
@@ -130,6 +124,53 @@ describe("vibe-market", () => {
     )
     assert.ok(market.title === title)
     assert.ok(market.index === 0)
+  })
+
+  it("Initializes a max size market", async () => {
+    let globalState = await program.account.globalState.fetch(
+      globalStateAddress
+    )
+    const [marketAddress, marketAddressNonce] = await getMarketAddress(
+      globalStateAddress,
+      globalState.numMarkets
+    )
+
+    const title = new Array(32).fill("x").join("")
+    const whitelist = new Array(16).fill(new PublicKey(admin.publicKey))
+
+    await program.rpc.initMarket(marketAddressNonce, whitelist, title, {
+      accounts: {
+        admin: admin.publicKey,
+        globalState: globalStateAddress,
+        market: marketAddress,
+        systemProgram: SystemProgram.programId,
+      },
+    })
+
+    globalState = await program.account.globalState.fetch(globalStateAddress)
+    assert.ok(globalState.numMarkets === 2)
+
+    const market = await program.account.market.fetch(marketAddress)
+    assert.ok(market.nonce === marketAddressNonce)
+    assert.ok(market.numCollections === 0)
+    assert.ok(market.numPriceModels === 0)
+    assert.ok(market.whitelist.length === 16)
+    assert.ok(market.title === title)
+    assert.ok(market.index === 1)
+
+    // Cannot add admins to max length whitelist
+    try {
+      await program.rpc.addAdmin({
+        accounts: {
+          admin: admin.publicKey,
+          market: marketAddress,
+          addAdmin: admin2.publicKey,
+        },
+      })
+      assert.ok(false)
+    } catch (err) {
+      assert.ok(true)
+    }
   })
 
   it("Allows admin to add new admin", async () => {
@@ -204,7 +245,7 @@ describe("vibe-market", () => {
       collectionAddress
     )
 
-    const title = "Collection A"
+    const title = new Array(32).fill("x").join("")
 
     await program.rpc.initCollection(
       collectionAddressNonce,
@@ -239,22 +280,24 @@ describe("vibe-market", () => {
       market.numPriceModels
     )
 
-    await program.rpc.initPriceModel(
-      priceModelAddressNonce,
-      [{ mint: paymentMint.publicKey, amount: new anchor.BN(100) }],
-      {
-        accounts: {
-          admin: admin.publicKey,
-          market: marketAddress,
-          priceModel: priceModelAddress,
-          systemProgram: SystemProgram.programId,
-        },
-      }
-    )
+    const salePrices = new Array(8).fill({
+      mint: paymentMint.publicKey,
+      amount: new anchor.BN(100),
+    })
+
+    await program.rpc.initPriceModel(priceModelAddressNonce, salePrices, {
+      accounts: {
+        admin: admin.publicKey,
+        market: marketAddress,
+        priceModel: priceModelAddress,
+        systemProgram: SystemProgram.programId,
+      },
+    })
 
     const priceModel = await program.account.priceModel.fetch(priceModelAddress)
     assert.ok(priceModel.nonce === priceModelAddressNonce)
     assert.ok(priceModel.index === 0)
+    assert.ok(salePrices.length === 8)
     assert.ok(
       priceModel.salePrices[0].mint.toString() ===
         paymentMint.publicKey.toString()
