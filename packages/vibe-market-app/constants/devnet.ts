@@ -5,5 +5,5 @@ export const ADDRESS_VIBE_MARKET = new PublicKey(
 )
 
 export const PROGRAM_VIBE_MARKET = new PublicKey(
-  "VBMLwfUCFZHvsqTzTQKfgdJFQEWuKSVQZVdc9T2SqFf"
+  "VBMevksLw5fEpVmWZgjJNbREZcxB883eMqEPruxazYH"
 )
