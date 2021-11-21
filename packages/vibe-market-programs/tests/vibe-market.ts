@@ -21,6 +21,7 @@ import {
   createAdminNftMint,
   createUserDebitAccount,
 } from "./testUtils"
+import { vibeMarketProgramId } from "../utils/constants"
 
 describe("vibe-market", () => {
   // Configure the client to use the local cluster.
@@ -383,6 +384,24 @@ describe("vibe-market", () => {
     )
   })
 
+  it("Does not allow for collection closing while NFTs exist", async () => {
+    try {
+      await program.rpc.closeCollection({
+        accounts: {
+          admin: admin.publicKey,
+          market: marketAddress,
+          rentRefund: admin.publicKey,
+          collection: collectionAddress,
+          listHead: listHeadAddress,
+          listTail: listTailAddress,
+        },
+      })
+      assert.ok(false)
+    } catch (err) {
+      assert.ok(err.code === 306)
+    }
+  })
+
   it("Allows for nft withdrawal", async () => {
     const adminNftAccountAddress = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -640,5 +659,21 @@ describe("vibe-market", () => {
       adminPaymentAccountAddress
     )
     assert.ok(adminPaymentAccount.amount.toNumber() === 75)
+  })
+
+  it("Allows for closing of NFT collections, when empty.", async () => {
+    const beforeBalance = await connection.getBalance(admin.publicKey)
+    await program.rpc.closeCollection({
+      accounts: {
+        admin: admin.publicKey,
+        market: marketAddress,
+        rentRefund: admin.publicKey,
+        collection: collectionAddress,
+        listHead: listHeadAddress,
+        listTail: listTailAddress,
+      },
+    })
+    const afterBalance = await connection.getBalance(admin.publicKey)
+    assert.ok(beforeBalance < afterBalance)
   })
 })

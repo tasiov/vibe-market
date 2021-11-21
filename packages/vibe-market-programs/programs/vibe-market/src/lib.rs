@@ -299,6 +299,19 @@ pub mod vibe_market {
         transfer(cpi_ctx, amount)?;
         Ok(())
     }
+
+    #[access_control(
+        Market::is_valid_admin(&ctx.accounts.market, ctx.accounts.admin.key)
+    )]
+    pub fn close_collection(ctx: Context<CloseCollection>) -> ProgramResult {
+        let list_head = &ctx.accounts.list_head;
+        let list_tail = &ctx.accounts.list_tail;
+        if list_head.next_list_item != list_tail.to_account_info().key() ||
+        list_tail.prev_list_item != list_head.to_account_info().key() {
+            return Err(ErrorCode::CollectionNonEmpty.into());
+        }
+        Ok(())
+    }
 }
 
 /************************/
@@ -643,6 +656,37 @@ pub struct WithdrawLiquidity<'info> {
     rent: Sysvar<'info, Rent>,
 }
 
+#[derive(Accounts)]
+pub struct CloseCollection<'info> {
+    admin: Signer<'info>,
+    market: Box<Account<'info, Market>>,
+    #[account(address = list_head.payer)]
+    rent_refund: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [
+            market.to_account_info().key.as_ref(),
+            &collection.index.to_le_bytes(),
+            b"collection".as_ref(),
+        ],
+        bump = collection.nonce,
+        close = rent_refund
+    )]
+    collection: Account<'info, Collection>,
+    #[account(
+        mut,
+        address = collection.list_head,
+        close = rent_refund
+    )]
+    list_head: Account<'info, NftBucket>,
+    #[account(
+        mut,
+        address = collection.list_tail,
+        close = rent_refund
+    )]
+    list_tail: Account<'info, NftBucket>,
+}
+
 /*******************/
 /* DATA STRUCTURES */
 /*******************/
@@ -784,4 +828,6 @@ pub enum ErrorCode {
     AdminNotFound,
     #[msg("Admin whitelist exceeded max length of 16.")]
     AdminOutOfBounds,
+    #[msg("Collections cannot be closed until all NFTs are removed.")]
+    CollectionNonEmpty,
 }
