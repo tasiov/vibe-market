@@ -169,6 +169,50 @@ pub mod vibe_market {
         Ok(())
     }
 
+    #[access_control(
+        Market::is_valid_admin(&ctx.accounts.market, ctx.accounts.admin.key)
+    )]
+    pub fn withdraw_nft(
+        ctx: Context<WithdrawNft>,
+    ) -> ProgramResult {
+        // Transfer NFT
+        let market = &ctx.accounts.market;
+        let global_state_key = ctx.accounts.global_state.to_account_info().key();
+        let seeds = &[
+            global_state_key.as_ref(),
+            &market.index.to_le_bytes(),
+            &[market.nonce],
+        ];
+        let signer = &[&seeds[..]];
+        
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.program_nft_account.to_account_info(),
+            to: ctx.accounts.admin_nft_account.to_account_info(),
+            authority: ctx.accounts.market.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+        transfer(cpi_ctx, 1)?;
+
+        // Close NFT token account
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_accounts = CloseAccount {
+            account: ctx.accounts.program_nft_account.to_account_info(),
+            destination: ctx.accounts.rent_refund.to_account_info(),
+            authority: ctx.accounts.market.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+        close_account(cpi_ctx)?;
+
+        // Remove item from linked-list
+        let prev_list_item = &mut ctx.accounts.prev_list_item;
+        let next_list_item = &mut ctx.accounts.next_list_item;
+        prev_list_item.next_list_item = next_list_item.to_account_info().key();
+        next_list_item.prev_list_item = prev_list_item.to_account_info().key();
+
+        Ok(())
+    }
+
     pub fn purchase_nft(
         ctx: Context<PurchaseNft>,
     ) -> ProgramResult {
@@ -440,6 +484,55 @@ pub struct AddNft<'info> {
         associated_token::authority = market,
     )]
     program_nft_account: Box<Account<'info, TokenAccount>>,
+    #[account(address = associated_token::ID)]
+    associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = token::ID)]
+    token_program: Program<'info, Token>,
+    #[account(address = system_program::ID)]
+    system_program: Program<'info, System>,
+    rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawNft<'info> {
+    #[account(mut)]
+    admin: Signer<'info>,
+    #[account(address = withdraw_list_item.payer)]
+    rent_refund: Signer<'info>,
+    #[account(address = withdraw_list_item.price_model)]
+    price_model: Box<Account<'info, PriceModel>>,
+    #[account(
+        seeds = [
+            b"global".as_ref(),
+        ],
+        bump = global_state.nonce,
+    )]
+    global_state: Account<'info, GlobalState>,
+    #[account(address = price_model.market)]
+    market: Box<Account<'info, Market>>,
+    #[account(mut, close = rent_refund)]
+    withdraw_list_item: Box<Account<'info, NftBucket>>,
+    #[account(mut, address = withdraw_list_item.token_account)]
+    program_nft_account: Box<Account<'info, TokenAccount>>,
+    #[account(address = program_nft_account.mint)]
+    program_nft_mint: Box<Account<'info, Mint>>,
+    #[account(
+        init_if_needed,
+        payer = admin,
+	    associated_token::mint = program_nft_mint,
+        associated_token::authority = admin,
+    )]
+    admin_nft_account: Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
+        address = withdraw_list_item.prev_list_item
+    )]
+    prev_list_item: Account<'info, NftBucket>,
+    #[account(
+        mut,
+        address = withdraw_list_item.next_list_item
+    )]
+    next_list_item: Account<'info, NftBucket>,
     #[account(address = associated_token::ID)]
     associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = token::ID)]

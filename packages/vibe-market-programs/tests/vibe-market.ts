@@ -383,7 +383,92 @@ describe("vibe-market", () => {
     )
   })
 
+  it("Allows for nft withdrawal", async () => {
+    const adminNftAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      nftMint.publicKey,
+      admin.publicKey
+    )
+    const programNftAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      nftMint.publicKey,
+      marketAddress,
+      true
+    )
+
+    const nftBucketAccount = await program.account.nftBucket.fetch(
+      nftBucket.publicKey
+    )
+
+    await program.rpc.withdrawNft({
+      accounts: {
+        admin: admin.publicKey,
+        rentRefund: admin.publicKey,
+        priceModel: priceModelAddress,
+        globalState: globalStateAddress,
+        market: marketAddress,
+        withdrawListItem: nftBucket.publicKey,
+        programNftAccount: programNftAccountAddress,
+        programNftMint: nftMint.publicKey,
+        adminNftAccount: adminNftAccountAddress,
+        prevListItem: nftBucketAccount.prevListItem,
+        nextListItem: nftBucketAccount.nextListItem,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+      },
+    })
+
+    try {
+      await program.account.nftBucket.fetch(nftBucket.publicKey)
+      assert.ok(false)
+    } catch (err) {
+      assert.ok(true)
+    }
+
+    const nftToken = new Token(
+      connection,
+      nftMint.publicKey,
+      TOKEN_PROGRAM_ID,
+      user
+    )
+    const adminNftAccount = await nftToken.getAccountInfo(
+      adminNftAccountAddress
+    )
+    assert.ok(adminNftAccount.amount.toNumber() === 1)
+    try {
+      await nftToken.getAccountInfo(programNftAccountAddress)
+      assert.ok(false)
+    } catch (err) {
+      assert.ok(true)
+    }
+
+    const prevListItem = await program.account.nftBucket.fetch(
+      nftBucketAccount.prevListItem
+    )
+    assert.ok(
+      prevListItem.nextListItem.toString() ===
+        nftBucketAccount.nextListItem.toString()
+    )
+    const nextListItem = await program.account.nftBucket.fetch(
+      nftBucketAccount.nextListItem
+    )
+    assert.ok(
+      nextListItem.prevListItem.toString() ===
+        nftBucketAccount.prevListItem.toString()
+    )
+  })
+
   it("Allows for nft purchasing", async () => {
+    const adminAssociatedAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      nftMint.publicKey,
+      admin.publicKey
+    )
     const userPaymentAccountAddress = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
@@ -410,6 +495,26 @@ describe("vibe-market", () => {
       marketAddress,
       true
     )
+
+    await program.rpc.addNft({
+      accounts: {
+        admin: admin.publicKey,
+        market: marketAddress,
+        collection: collectionAddress,
+        listHead: listHeadAddress,
+        nextListItem: listTailAddress,
+        newItem: nftBucket.publicKey,
+        priceModel: priceModelAddress,
+        adminNftAccount: adminAssociatedAddress,
+        adminNftMint: nftMint.publicKey,
+        programNftAccount: programNftAccountAddress,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+      },
+      signers: [nftBucket],
+    })
 
     const nftBucketAccount = await program.account.nftBucket.fetch(
       nftBucket.publicKey
