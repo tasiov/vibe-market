@@ -2,6 +2,7 @@ import _ from "lodash"
 import { PublicKey } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import { BaseAnchorAccount, BaseAnchorAccountManager } from "./baseAnchor"
+import { VibeMarket } from "../solana/vibeMarket"
 
 export const AccountType = "collection"
 
@@ -19,7 +20,7 @@ export class CollectionManager extends BaseAnchorAccountManager<
   CollectionAccount,
   Collection
 > {
-  constructor(program: Program) {
+  constructor(program: Program<VibeMarket>) {
     super(program, AccountType)
   }
 

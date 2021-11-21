@@ -1,11 +1,12 @@
 import _ from "lodash"
-import React, { ReactNode } from "react"
+import React, { ReactNode, useContext } from "react"
 import { PublicKey } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import * as Models from "../models"
+import { VibeMarket } from "../solana/vibeMarket"
 
 export interface AnchorAccountCacheProviderProps {
-  vibeMarketProgram: Program
+  vibeMarketProgram: Program<VibeMarket>
   children: ReactNode
 }
 
@@ -14,6 +15,7 @@ type AccountMap<T> = { [key: string]: T }
 export interface AnchorAccountCacheProviderState {
   [Models.GlobalState.AccountType]: AccountMap<Models.GlobalState.GlobalState>
   [Models.Market.AccountType]: AccountMap<Models.Market.Market>
+  [Models.Collection.AccountType]: AccountMap<Models.Collection.Collection>
 }
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T
@@ -55,37 +57,42 @@ interface AnchorAccountCacheFns {
   ) => void
 }
 
-export const AnchorAccountCacheContext = React.createContext<
+export type IAnchorAccountCacheContext =
   | ({ isEnabled: true } & AnchorAccountCacheProviderState &
-      AnchorAccountCacheFns)
+      AnchorAccountCacheFns & { vibeMarketProgram: Program<VibeMarket> })
   | { isEnabled: false }
->({ isEnabled: false })
+
+export const AnchorAccountCacheContext =
+  React.createContext<IAnchorAccountCacheContext>({ isEnabled: false })
 
 class AnchorAccountCacheProvider extends React.Component<
   AnchorAccountCacheProviderProps,
   AnchorAccountCacheProviderState
 > {
-  vibeMarketProgram: Program
   accountManagers: {
     [Models.GlobalState.AccountType]: Models.GlobalState.GlobalStateManager
     [Models.Market.AccountType]: Models.Market.MarketManager
+    [Models.Collection.AccountType]: Models.Collection.CollectionManager
   }
 
   constructor(props: Readonly<AnchorAccountCacheProviderProps>) {
     super(props)
-    this.vibeMarketProgram = this.props.vibeMarketProgram
 
     this.accountManagers = {
       [Models.GlobalState.AccountType]:
-        new Models.GlobalState.GlobalStateManager(this.vibeMarketProgram),
+        new Models.GlobalState.GlobalStateManager(this.props.vibeMarketProgram),
       [Models.Market.AccountType]: new Models.Market.MarketManager(
-        this.vibeMarketProgram
+        this.props.vibeMarketProgram
+      ),
+      [Models.Collection.AccountType]: new Models.Collection.CollectionManager(
+        this.props.vibeMarketProgram
       ),
     }
 
     this.state = {
       [Models.GlobalState.AccountType]: {},
       [Models.Market.AccountType]: {},
+      [Models.Collection.AccountType]: {},
     }
   }
 
@@ -171,6 +178,7 @@ class AnchorAccountCacheProvider extends React.Component<
         value={{
           ...this.state,
           isEnabled: true,
+          vibeMarketProgram: this.props.vibeMarketProgram,
           fetch: this.fetch.bind(this),
           fetchMulti: this.fetchMulti.bind(this),
           fetchAndSub: this.fetchAndSub.bind(this),
@@ -186,3 +194,5 @@ class AnchorAccountCacheProvider extends React.Component<
 }
 
 export default AnchorAccountCacheProvider
+
+export const useAnchorAccountCache = () => useContext(AnchorAccountCacheContext)

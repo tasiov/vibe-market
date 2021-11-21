@@ -33,12 +33,12 @@ interface LinkItemProps {
 
 const AdminLinkItems: Array<LinkItemProps> = [
   {
-    name: "Manage Whitelist",
+    name: "Whitelist",
     icon: FiAlignJustify,
     href: "/admin/manage-whitelist",
   },
   {
-    name: "Create Collection",
+    name: "Collections",
     icon: FiLayers,
     href: "/admin/create-collection",
   },
@@ -78,6 +78,7 @@ export default function SidebarWithHeader({
         h="full"
         position="fixed"
         backgroundColor={useColorModeValue("orange.50", "gray.700")}
+        overflow="auto"
       >
         {children}
       </Box>

@@ -1,5 +1,4 @@
 import { PublicKey, SystemProgram } from "@solana/web3.js"
-import { Program } from "@project-serum/anchor"
 import { getClusterConstants } from "../../constants"
 import {
   getCollectionAddress,
@@ -7,26 +6,33 @@ import {
   getListHeadAddress,
   getListTailAddress,
 } from "../seedAddresses"
+import type { IAnchorAccountCacheContext } from "../../contexts/AnchorAccountsCacheProvider"
+import { assert } from "../../utils/assert"
 
 export const createCollection = async (
-  vibeMarketProgram: Program,
+  anchorAccountCache: IAnchorAccountCacheContext,
   walletPublicKey: PublicKey,
   title: String
 ) => {
+  if (!anchorAccountCache.isEnabled) {
+    throw new Error("Application is not connected")
+  }
+  assert(title.length <= 32, "Title length exceed 32 characters")
+  assert(title.length > 0, "Title must not be empty")
+
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
-  const market = await vibeMarketProgram.account.market.fetch(
-    ADDRESS_VIBE_MARKET
-  )
+
+  const market = await anchorAccountCache.fetch("market", ADDRESS_VIBE_MARKET)
   const [globalStateAddress] = await getGlobalStateAddress()
   const [collectionAddress, collectionAddressNonce] =
-    await getCollectionAddress(globalStateAddress, market.data.numCollections)
+    await getCollectionAddress(ADDRESS_VIBE_MARKET, market.data.numCollections)
   const [listHeadAddress, listHeadAddressNonce] = await getListHeadAddress(
     collectionAddress
   )
   const [listTailAddress, listTailAddressNonce] = await getListTailAddress(
     collectionAddress
   )
-  await vibeMarketProgram.rpc.initCollection(
+  await anchorAccountCache.vibeMarketProgram.rpc.initCollection(
     collectionAddressNonce,
     listHeadAddressNonce,
     listTailAddressNonce,

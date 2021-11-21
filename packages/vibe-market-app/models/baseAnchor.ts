@@ -12,7 +12,7 @@ export class BaseAnchorAccountManager<
   _accountClient: AccountClient
   _subscriptionsMap: Record<string, number> = {}
 
-  constructor(public program: Program, public accountName: string) {
+  constructor(public program: Program<any>, public accountName: string) {
     super()
     this._accountClient = program.account[accountName]
   }
