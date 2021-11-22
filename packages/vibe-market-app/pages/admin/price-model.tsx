@@ -13,13 +13,7 @@ import {
   Wrap,
   Text,
 } from "@chakra-ui/react"
-import {
-  Center,
-  VStack,
-  StackDivider,
-  Container,
-  Flex,
-} from "@chakra-ui/layout"
+import { Center, VStack, StackDivider, Flex } from "@chakra-ui/layout"
 import { useAccount, useAccounts } from "../../hooks/useAccounts"
 import { getClusterConstants } from "../../constants"
 import createPriceModel from "../../solana/scripts/createPriceModel"
@@ -30,7 +24,6 @@ import useTxCallback from "../../hooks/useTxCallback"
 import { PublicKey } from "@solana/web3.js"
 import { FiPlus } from "react-icons/fi"
 import { usePriceModelAddresses } from "../../hooks/useSeedAddress"
-import { PriceModel } from "../../models"
 
 type SalePrice = { mint: string; amount: number }
 
@@ -172,21 +165,21 @@ const PriceModelPage = () => {
                               w="full"
                               textAlign="left"
                               mb="2"
-                              key={`priceModel-data-${key}`}
+                              key={`priceModel-data-sale-price-${index}`}
                               backgroundColor="transparent"
                             >{`Sale Price (${index})`}</Code>
                             <Code
                               w="full"
                               textAlign="left"
                               mb="2"
-                              key={`priceModel-data-${key}`}
+                              key={`priceModel-data-sale-price-${index}-mint`}
                               backgroundColor="transparent"
                             >{`Mint: ${salePrice.mint}`}</Code>
                             <Code
                               w="full"
                               textAlign="left"
                               mb="2"
-                              key={`priceModel-data-${key}`}
+                              key={`priceModel-data-sale-price-${index}-amount`}
                               backgroundColor="transparent"
                             >{`Amount: ${salePrice.amount}`}</Code>
                           </>
@@ -214,6 +207,7 @@ const PriceModelPage = () => {
               <VStack
                 w="full"
                 spacing="2"
+                key={`input-sale-price-${index}`}
                 flexDirection="column"
                 alignItems="flex-start"
               >

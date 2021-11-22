@@ -23,7 +23,10 @@ const createCollection = async (
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
 
   const market = await anchorAccountCache.fetch("market", ADDRESS_VIBE_MARKET)
-  const [globalStateAddress] = await getGlobalStateAddress()
+  if (!market) {
+    throw new Error(`market account not found: ${ADDRESS_VIBE_MARKET}`)
+  }
+
   const [collectionAddress, collectionAddressNonce] =
     await getCollectionAddress(ADDRESS_VIBE_MARKET, market.data.numCollections)
   const [listHeadAddress, listHeadAddressNonce] = await getListHeadAddress(

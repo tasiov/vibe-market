@@ -41,7 +41,7 @@ export abstract class BaseAccountManager<S, T extends BaseAccount<S>> {
 
   abstract subscribe(
     publicKey: PublicKey,
-    callback: (account: T) => any,
+    callback: (account: T | undefined) => any,
     commitment?: Commitment
   ): void
 

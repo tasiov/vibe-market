@@ -33,7 +33,6 @@ export class PriceModelManager extends BaseAnchorAccountManager<
     typeof entity.data.salePrices.length === "number"
 
   toDomain = async (account: any, publicKey: PublicKey) => {
-    console.log("account", account)
     const accountData = { ...account }
     accountData.market = accountData.market.toString()
     accountData.salePrices = _.forEach(accountData.salePrices, (salePrice) => {

@@ -18,6 +18,8 @@ export interface AnchorAccountCacheProviderState {
   [Models.Collection.AccountType]: AccountMap<Models.Collection.Collection>
   [Models.NftBucket.AccountType]: AccountMap<Models.NftBucket.NftBucket>
   [Models.PriceModel.AccountType]: AccountMap<Models.PriceModel.PriceModel>
+  [Models.HToken.AccountType]: AccountMap<Models.HToken.HToken>
+  [Models.HMint.AccountType]: AccountMap<Models.HMint.HMint>
 }
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T
@@ -38,7 +40,8 @@ export type SpecificAccountTypeMap<T extends Models.AccountTypes> = {
 interface AnchorAccountCacheFns {
   fetch<T extends Models.AccountTypes>(
     accountType: T,
-    publicKey: PublicKey
+    publicKey: PublicKey,
+    useCache?: boolean
   ): Promise<SpecificAccountType<T> | undefined>
   fetchMulti<T extends Models.AccountTypes>(
     accountType: T,
@@ -77,6 +80,8 @@ class AnchorAccountCacheProvider extends React.Component<
     [Models.Collection.AccountType]: Models.Collection.CollectionManager
     [Models.NftBucket.AccountType]: Models.NftBucket.NftBucketManager
     [Models.PriceModel.AccountType]: Models.PriceModel.PriceModelManager
+    [Models.HToken.AccountType]: Models.HToken.HTokenManager
+    [Models.HMint.AccountType]: Models.HMint.HMintManager
   }
 
   constructor(props: Readonly<AnchorAccountCacheProviderProps>) {
@@ -97,6 +102,12 @@ class AnchorAccountCacheProvider extends React.Component<
       [Models.PriceModel.AccountType]: new Models.PriceModel.PriceModelManager(
         this.props.vibeMarketProgram
       ),
+      [Models.HToken.AccountType]: new Models.HToken.HTokenManager(
+        this.props.vibeMarketProgram.provider.connection
+      ),
+      [Models.HMint.AccountType]: new Models.HMint.HMintManager(
+        this.props.vibeMarketProgram.provider.connection
+      ),
     }
 
     this.state = {
@@ -105,6 +116,8 @@ class AnchorAccountCacheProvider extends React.Component<
       [Models.Collection.AccountType]: {},
       [Models.NftBucket.AccountType]: {},
       [Models.PriceModel.AccountType]: {},
+      [Models.HToken.AccountType]: {},
+      [Models.HMint.AccountType]: {},
     }
   }
 
@@ -128,8 +141,13 @@ class AnchorAccountCacheProvider extends React.Component<
 
   async fetch<T extends Models.AccountTypes>(
     accountType: T,
-    publicKey: PublicKey
+    publicKey: PublicKey,
+    useCache = false
   ) {
+    const cacheAccount = this.state[accountType][publicKey.toString()]
+    if (useCache && cacheAccount) {
+      return cacheAccount as SpecificAccountType<T> | undefined
+    }
     const accountManager = this.accountManagers[accountType]
     const account = await accountManager.fetch(publicKey)
     this._setAccounts(accountType, { [publicKey.toBase58()]: account })

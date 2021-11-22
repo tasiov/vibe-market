@@ -15,6 +15,10 @@ const closeCollection = async (
   const [listHeadAddress] = await getListHeadAddress(collectionAddress)
   const [listTailAddress] = await getListTailAddress(collectionAddress)
   const listHead = await anchorAccountCache.fetch("nftBucket", listHeadAddress)
+
+  if (!listHead) {
+    throw new Error(`listHead account not found: ${listHeadAddress}`)
+  }
   const rentRefundAddress = new PublicKey(listHead.data.payer)
 
   await anchorAccountCache.vibeMarketProgram.rpc.closeCollection({
