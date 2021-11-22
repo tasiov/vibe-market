@@ -9,7 +9,7 @@ import {
 import type { IAnchorAccountCacheContext } from "../../contexts/AnchorAccountsCacheProvider"
 import { assert } from "../../utils/assert"
 
-export const createCollection = async (
+const createCollection = async (
   anchorAccountCache: IAnchorAccountCacheContext,
   walletPublicKey: PublicKey,
   title: String
@@ -49,3 +49,5 @@ export const createCollection = async (
     }
   )
 }
+
+export default createCollection

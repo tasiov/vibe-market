@@ -16,6 +16,7 @@ export interface AnchorAccountCacheProviderState {
   [Models.GlobalState.AccountType]: AccountMap<Models.GlobalState.GlobalState>
   [Models.Market.AccountType]: AccountMap<Models.Market.Market>
   [Models.Collection.AccountType]: AccountMap<Models.Collection.Collection>
+  [Models.NftBucket.AccountType]: AccountMap<Models.NftBucket.NftBucket>
 }
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T
@@ -73,6 +74,7 @@ class AnchorAccountCacheProvider extends React.Component<
     [Models.GlobalState.AccountType]: Models.GlobalState.GlobalStateManager
     [Models.Market.AccountType]: Models.Market.MarketManager
     [Models.Collection.AccountType]: Models.Collection.CollectionManager
+    [Models.NftBucket.AccountType]: Models.NftBucket.NftBucketManager
   }
 
   constructor(props: Readonly<AnchorAccountCacheProviderProps>) {
@@ -87,12 +89,16 @@ class AnchorAccountCacheProvider extends React.Component<
       [Models.Collection.AccountType]: new Models.Collection.CollectionManager(
         this.props.vibeMarketProgram
       ),
+      [Models.NftBucket.AccountType]: new Models.NftBucket.NftBucketManager(
+        this.props.vibeMarketProgram
+      ),
     }
 
     this.state = {
       [Models.GlobalState.AccountType]: {},
       [Models.Market.AccountType]: {},
       [Models.Collection.AccountType]: {},
+      [Models.NftBucket.AccountType]: {},
     }
   }
 

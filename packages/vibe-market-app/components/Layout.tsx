@@ -18,7 +18,7 @@ import {
   Text,
   useBreakpointValue,
 } from "@chakra-ui/react"
-import { FiAlignJustify, FiMenu, FiLayers } from "react-icons/fi"
+import { FiAlignJustify, FiMenu, FiLayers, FiDollarSign } from "react-icons/fi"
 import { IconType } from "react-icons"
 import { ReactText } from "react"
 import { Wallet } from "./Wallet"
@@ -35,12 +35,17 @@ const AdminLinkItems: Array<LinkItemProps> = [
   {
     name: "Whitelist",
     icon: FiAlignJustify,
-    href: "/admin/manage-whitelist",
+    href: "/admin/whitelist",
   },
   {
     name: "Collections",
     icon: FiLayers,
-    href: "/admin/create-collection",
+    href: "/admin/collections",
+  },
+  {
+    name: "Price Models",
+    icon: FiDollarSign,
+    href: "/admin/price-model",
   },
 ]
 
