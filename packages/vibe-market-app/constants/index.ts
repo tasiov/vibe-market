@@ -14,9 +14,9 @@ const DEFAULT_CLUSTER = "devnet"
 export type ClusterKey = keyof typeof CLUSTER_MAP
 
 interface CLUSTER_KEY_MAP {
+  ADDRESS_NATIVE_MINT: PublicKey
   ADDRESS_VIBE_MARKET: PublicKey
   PROGRAM_ASSOCIATED_TOKEN: PublicKey
-  PROGRAM_NATIVE_MINT: PublicKey
   PROGRAM_VIBE_MARKET: PublicKey
   PROGRAM_SYSTEM: PublicKey
   PROGRAM_TOKEN: PublicKey

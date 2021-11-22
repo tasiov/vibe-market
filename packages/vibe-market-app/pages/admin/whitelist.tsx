@@ -5,17 +5,16 @@ import { useAccount } from "../../hooks/useAccounts"
 import { getClusterConstants } from "../../constants"
 import addAdmin from "../../solana/scripts/addAdmin"
 import removeAdmin from "../../solana/scripts/removeAdmin"
-import { useCollectionAddresses } from "../../hooks/useSeedAddress"
-import { createCollection } from "../../solana/scripts/createCollection"
 import { useAnchorWallet } from "@solana/wallet-adapter-react"
 import { useCallback, useState } from "react"
 import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvider"
 import useTxCallback from "../../hooks/useTxCallback"
 import { PublicKey } from "@solana/web3.js"
 
-const ManageWhitelist = () => {
+const WhitelistPage = () => {
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
-  const market = useAccount("market", ADDRESS_VIBE_MARKET)
+  const [market] = useAccount("market", ADDRESS_VIBE_MARKET)
+  console.log("market", market)
 
   const wallet = useAnchorWallet()
   const anchorAccountCache = useAnchorAccountCache()
@@ -134,4 +133,4 @@ const ManageWhitelist = () => {
   )
 }
 
-export default ManageWhitelist
+export default WhitelistPage

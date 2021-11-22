@@ -49,3 +49,26 @@ export const getListTailAddress = (collectionAddress: PublicKey) => {
     PROGRAM_VIBE_MARKET
   )
 }
+
+export const getPriceModelAddress = (
+  marketAddress: PublicKey,
+  index: number
+) => {
+  const { PROGRAM_VIBE_MARKET } = getClusterConstants("PROGRAM_VIBE_MARKET")
+  const indexBuffer = Uint8Array.from(new anchor.BN(index).toArray("le", 4))
+  return PublicKey.findProgramAddress(
+    [marketAddress.toBuffer(), indexBuffer, Buffer.from("price_model")],
+    PROGRAM_VIBE_MARKET
+  )
+}
+
+export const getPriceModelAddresses = (
+  marketAddress: PublicKey,
+  numPriceModels: number
+) =>
+  Promise.all(
+    _.map(_.range(numPriceModels), async (index) => {
+      const retval = await getPriceModelAddress(marketAddress, index)
+      return retval[0]
+    })
+  )

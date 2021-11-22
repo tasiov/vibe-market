@@ -1,5 +1,5 @@
 import _ from "lodash"
-import { useContext, useEffect, useMemo } from "react"
+import { useContext, useEffect, useMemo, useState } from "react"
 import { PublicKey } from "@solana/web3.js"
 import { AccountTypes } from "../models"
 import {
@@ -11,20 +11,25 @@ export function useAccount<T extends AccountTypes>(
   accountType: T,
   publicKey: PublicKey | undefined,
   subscribe = true
-): SpecificAccountType<T> | undefined {
+): [SpecificAccountType<T> | undefined, boolean] {
   const anchorAccountCache = useContext(AnchorAccountCacheContext)
   const publicKey58 = publicKey?.toBase58()
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!anchorAccountCache.isEnabled || !publicKey) {
       return
     }
 
-    if (subscribe) {
-      anchorAccountCache.fetchAndSub(accountType, publicKey)
-    } else {
-      anchorAccountCache.fetch(accountType, publicKey)
-    }
+    ;(async function () {
+      setLoading(true)
+      if (subscribe) {
+        await anchorAccountCache.fetchAndSub(accountType, publicKey)
+      } else {
+        await anchorAccountCache.fetch(accountType, publicKey)
+      }
+      setLoading(false)
+    })()
 
     return () => {
       if (subscribe) {
@@ -36,35 +41,42 @@ export function useAccount<T extends AccountTypes>(
   const anchorAccountCacheType =
     anchorAccountCache.isEnabled && anchorAccountCache[accountType]
 
-  return useMemo(() => {
+  const account = useMemo(() => {
     if (!anchorAccountCacheType || !publicKey) {
       return undefined
     }
-    return anchorAccountCacheType[
-      publicKey.toBase58()
-    ] as SpecificAccountType<T>
+    return anchorAccountCacheType[publicKey.toBase58()] as
+      | SpecificAccountType<T>
+      | undefined
   }, [anchorAccountCacheType, publicKey58])
+
+  return [account, loading]
 }
 
 export function useAccounts<T extends AccountTypes>(
   accountType: T,
   publicKeys: PublicKey[] | undefined,
   subscribe = true
-): { [key: string]: SpecificAccountType<T> } | undefined {
+): [{ [key: string]: SpecificAccountType<T> } | undefined, boolean] {
   const anchorAccountCache = useContext(AnchorAccountCacheContext)
   const publicKeys58 = _.map(publicKeys, (publicKey) => publicKey.toBase58())
   const publicKey58Str = _.join(publicKeys58, "")
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!anchorAccountCache.isEnabled || !publicKeys || _.isEmpty(publicKeys)) {
       return
     }
 
-    if (subscribe) {
-      anchorAccountCache.fetchAndSubMulti(accountType, publicKeys)
-    } else {
-      anchorAccountCache.fetchMulti(accountType, publicKeys)
-    }
+    ;(async function () {
+      setLoading(true)
+      if (subscribe) {
+        await anchorAccountCache.fetchAndSubMulti(accountType, publicKeys)
+      } else {
+        await anchorAccountCache.fetchMulti(accountType, publicKeys)
+      }
+      setLoading(false)
+    })()
 
     return () => {
       if (subscribe) {
@@ -76,7 +88,7 @@ export function useAccounts<T extends AccountTypes>(
   const anchorAccountCacheType =
     anchorAccountCache.isEnabled && anchorAccountCache[accountType]
 
-  return useMemo(() => {
+  const accounts = useMemo(() => {
     if (!anchorAccountCacheType || !publicKeys || _.isEmpty(publicKeys)) {
       return undefined
     }
@@ -84,4 +96,6 @@ export function useAccounts<T extends AccountTypes>(
       [key: string]: SpecificAccountType<T>
     }
   }, [anchorAccountCacheType, publicKey58Str])
+
+  return [accounts, loading]
 }

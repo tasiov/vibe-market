@@ -17,6 +17,7 @@ export interface AnchorAccountCacheProviderState {
   [Models.Market.AccountType]: AccountMap<Models.Market.Market>
   [Models.Collection.AccountType]: AccountMap<Models.Collection.Collection>
   [Models.NftBucket.AccountType]: AccountMap<Models.NftBucket.NftBucket>
+  [Models.PriceModel.AccountType]: AccountMap<Models.PriceModel.PriceModel>
 }
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T
@@ -38,7 +39,7 @@ interface AnchorAccountCacheFns {
   fetch<T extends Models.AccountTypes>(
     accountType: T,
     publicKey: PublicKey
-  ): Promise<SpecificAccountType<T>>
+  ): Promise<SpecificAccountType<T> | undefined>
   fetchMulti<T extends Models.AccountTypes>(
     accountType: T,
     publicKeys: PublicKey[]
@@ -46,7 +47,7 @@ interface AnchorAccountCacheFns {
   fetchAndSub<T extends Models.AccountTypes>(
     accountType: T,
     publicKey: PublicKey
-  ): Promise<SpecificAccountType<T>>
+  ): Promise<SpecificAccountType<T> | undefined>
   fetchAndSubMulti<T extends Models.AccountTypes>(
     accountType: T,
     publicKeys: PublicKey[]
@@ -75,6 +76,7 @@ class AnchorAccountCacheProvider extends React.Component<
     [Models.Market.AccountType]: Models.Market.MarketManager
     [Models.Collection.AccountType]: Models.Collection.CollectionManager
     [Models.NftBucket.AccountType]: Models.NftBucket.NftBucketManager
+    [Models.PriceModel.AccountType]: Models.PriceModel.PriceModelManager
   }
 
   constructor(props: Readonly<AnchorAccountCacheProviderProps>) {
@@ -92,6 +94,9 @@ class AnchorAccountCacheProvider extends React.Component<
       [Models.NftBucket.AccountType]: new Models.NftBucket.NftBucketManager(
         this.props.vibeMarketProgram
       ),
+      [Models.PriceModel.AccountType]: new Models.PriceModel.PriceModelManager(
+        this.props.vibeMarketProgram
+      ),
     }
 
     this.state = {
@@ -99,19 +104,25 @@ class AnchorAccountCacheProvider extends React.Component<
       [Models.Market.AccountType]: {},
       [Models.Collection.AccountType]: {},
       [Models.NftBucket.AccountType]: {},
+      [Models.PriceModel.AccountType]: {},
     }
   }
 
-  private _setAccounts<K extends Models.AccountTypes>(
-    accountType: K,
+  private _setAccounts<T extends Models.AccountTypes>(
+    accountType: T,
     newAccountsMap: { [key: string]: ManagerReturnType }
   ) {
+    const accountsMap = { ...this.state[accountType] }
+    _.forEach(newAccountsMap, (account, publicKeyStr) => {
+      if (account) {
+        accountsMap[publicKeyStr] = account
+      } else {
+        delete accountsMap[publicKeyStr]
+      }
+    })
     this.setState({
       ...this.state,
-      [accountType]: {
-        ...this.state[accountType],
-        ...newAccountsMap,
-      },
+      [accountType]: accountsMap,
     })
   }
 
@@ -122,7 +133,7 @@ class AnchorAccountCacheProvider extends React.Component<
     const accountManager = this.accountManagers[accountType]
     const account = await accountManager.fetch(publicKey)
     this._setAccounts(accountType, { [publicKey.toBase58()]: account })
-    return account as SpecificAccountType<T>
+    return account as SpecificAccountType<T> | undefined
   }
 
   async fetchMulti<T extends Models.AccountTypes>(
@@ -130,14 +141,9 @@ class AnchorAccountCacheProvider extends React.Component<
     publicKeys: PublicKey[]
   ) {
     const accountManager = this.accountManagers[accountType]
-    const accounts = (await accountManager.fetchMulti(
-      publicKeys
-    )) as SpecificAccountTypeMap<T>
-    const filteredAccounts = _.pickBy(accounts, _.identity) as {
-      [key: string]: SpecificAccountType<T>
-    }
-    this._setAccounts(accountType, filteredAccounts)
-    return accounts
+    const accounts = await accountManager.fetchMulti(publicKeys)
+    this._setAccounts(accountType, accounts)
+    return accounts as SpecificAccountTypeMap<T>
   }
 
   async fetchAndSub<T extends Models.AccountTypes>(
@@ -149,7 +155,7 @@ class AnchorAccountCacheProvider extends React.Component<
       this._setAccounts(accountType, { [publicKey.toBase58()]: account })
     )
     const retval = await this.fetch(accountType, publicKey)
-    return retval as SpecificAccountType<T>
+    return retval as SpecificAccountType<T> | undefined
   }
 
   async fetchAndSubMulti<T extends Models.AccountTypes>(
@@ -175,7 +181,7 @@ class AnchorAccountCacheProvider extends React.Component<
     accountType: Models.AccountTypes,
     publicKeys: PublicKey[]
   ) => {
-    _.forEach(publicKeys, this.unsubscribe.bind(this.unsubscribe, accountType))
+    _.forEach(publicKeys, this.unsubscribe.bind(this, accountType))
   }
 
   render() {

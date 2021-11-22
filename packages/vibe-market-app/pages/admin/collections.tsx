@@ -5,7 +5,7 @@ import {
   Text,
   Input,
   Button,
-  Divider,
+  Spinner,
   Wrap,
 } from "@chakra-ui/react"
 import {
@@ -26,7 +26,7 @@ import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvide
 import useTxCallback from "../../hooks/useTxCallback"
 import { PublicKey } from "@solana/web3.js"
 
-const CreateCollection = () => {
+const CollectionsPage = () => {
   const wallet = useAnchorWallet()
   const anchorAccountCache = useAnchorAccountCache()
 
@@ -35,7 +35,7 @@ const CreateCollection = () => {
     setTitle(event.target.value)
 
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
-  const market = useAccount("market", ADDRESS_VIBE_MARKET)
+  const [market] = useAccount("market", ADDRESS_VIBE_MARKET)
 
   const createCollectionButtonDisabled =
     !anchorAccountCache.isEnabled || !wallet?.publicKey
@@ -66,7 +66,7 @@ const CreateCollection = () => {
     undefined
   )
 
-  const collection = useAccount(
+  const [collection, collectionLoading] = useAccount(
     "collection",
     collectionAdress ? new PublicKey(collectionAdress) : undefined
   )
@@ -103,13 +103,23 @@ const CreateCollection = () => {
     <VStack
       w="full"
       divider={<StackDivider borderColor="gray.200" />}
-      spacing={4}
+      spacing={16}
       textAlign="center"
     >
       <Center flexDirection="column" mb="16">
-        <Heading w="full">View Collections</Heading>
-        <Wrap mt="4" spacing="20" justify="center">
-          <Flex mt="8" flexDirection="column" h="80" overflow="auto" p="4">
+        <Heading w="full" mb="8">
+          View Collections
+        </Heading>
+        <Wrap spacing="16" justify="center" minH="96">
+          <Flex
+            h="80"
+            w="96"
+            p="4"
+            flexDirection="column"
+            overflow="auto"
+            border="1px solid black"
+            borderRadius="10px"
+          >
             {collectionAddresses &&
               _.map(collectionAddresses, (publicKey) => (
                 <Button
@@ -124,12 +134,14 @@ const CreateCollection = () => {
                 </Button>
               ))}
           </Flex>
-          <Center mt="8" w="96" p="4" h="80" flexDirection="column">
+          <VStack>
             <Flex
+              w="96"
+              p="4"
+              minH="80"
               flexDirection="column"
-              justifyContent="flex-start"
-              alignItems="flex-start"
-              backgroundColor="gray.100"
+              border="1px solid black"
+              borderRadius="10px"
             >
               {collection && (
                 <Code
@@ -153,6 +165,14 @@ const CreateCollection = () => {
                     >{`${key}: ${collection.data[key]}`}</Code>
                   )
                 )}
+              {!collection && collectionLoading && (
+                <Center>
+                  <Spinner />
+                </Center>
+              )}
+              {!collection && !collectionLoading && (
+                <Text textAlign="center">Collection not found</Text>
+              )}
             </Flex>
             {collection && (
               <Button
@@ -165,10 +185,10 @@ const CreateCollection = () => {
                 Close Collection
               </Button>
             )}
-          </Center>
+          </VStack>
         </Wrap>
       </Center>
-      <Center mt="16" flexDirection="column">
+      <Center flexDirection="column">
         <Heading w="full">Create Collection</Heading>
         <Center mt="8" w="96" flexDirection="column">
           <Input
@@ -195,4 +215,4 @@ const CreateCollection = () => {
   )
 }
 
-export default CreateCollection
+export default CollectionsPage

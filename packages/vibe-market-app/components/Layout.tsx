@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import React, { ReactNode } from "react"
+import React, { ReactNode, useEffect, useRef } from "react"
 import {
   IconButton,
   Box,
@@ -18,7 +18,15 @@ import {
   Text,
   useBreakpointValue,
 } from "@chakra-ui/react"
-import { FiAlignJustify, FiMenu, FiLayers, FiDollarSign } from "react-icons/fi"
+import {
+  FiAlignJustify,
+  FiMenu,
+  FiLayers,
+  FiDollarSign,
+  FiFilePlus,
+  FiImage,
+  FiLogOut,
+} from "react-icons/fi"
 import { IconType } from "react-icons"
 import { ReactText } from "react"
 import { Wallet } from "./Wallet"
@@ -45,6 +53,16 @@ const AdminLinkItems: Array<LinkItemProps> = [
   {
     name: "Price Models",
     icon: FiDollarSign,
+    href: "/admin/price-model",
+  },
+  {
+    name: "Add NFT",
+    icon: FiImage,
+    href: "/admin/price-model",
+  },
+  {
+    name: "Withdraw Liquidity",
+    icon: FiLogOut,
     href: "/admin/price-model",
   },
 ]
@@ -80,6 +98,7 @@ export default function SidebarWithHeader({
         w={{ base: "full", md: "75%", lg: "80%", xl: "85%" }}
         ml={{ base: 0, md: "25%", lg: "20%", xl: "15%" }}
         p="8"
+        pb="40"
         h="full"
         position="fixed"
         backgroundColor={useColorModeValue("orange.50", "gray.700")}

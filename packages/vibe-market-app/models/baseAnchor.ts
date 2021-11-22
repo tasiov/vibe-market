@@ -43,8 +43,11 @@ export class BaseAnchorAccountManager<
     return domainAccount
   }
 
-  fetch = async (publicKey: PublicKey) => {
-    const account = await this._accountClient.fetch(publicKey)
+  fetch = async (publicKey: PublicKey): Promise<T | undefined> => {
+    const account = await this._accountClient.fetchNullable(publicKey)
+    if (!account) {
+      return undefined
+    }
     const domainEntity = await this.transform(account, publicKey)
     return domainEntity
   }
@@ -96,9 +99,9 @@ export class BaseAnchorAccountManager<
 
   async subscribeAndFetch(
     publicKey: PublicKey,
-    callback: (account: T) => any,
+    callback: (account: T | undefined) => any,
     commitment?: Commitment
-  ): Promise<T> {
+  ): Promise<T | undefined> {
     this.subscribe(publicKey, callback, commitment)
     return await this.fetch(publicKey)
   }
@@ -112,13 +115,16 @@ export class BaseAnchorAccountManager<
     if (account) {
       return account
     }
-    account = await new Promise((resolve, reject) => {
-      this.subscribe(publicKey, resolve, commitment)
-      setTimeout(() => {
-        reject(new Error("Reached timeout before account change"))
-      }, timeout)
-    })
+    try {
+      account = await new Promise((resolve, reject) => {
+        this.subscribe(publicKey, resolve, commitment)
+        setTimeout(reject, timeout)
+      })
+    } catch (err) {}
     this.unsubscribe(publicKey)
+    if (!account) {
+      throw new Error("Reached timeout before account change")
+    }
     return account
   }
 }
