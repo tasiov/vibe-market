@@ -24,9 +24,15 @@ export interface AnchorAccountCacheProviderState {
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T
 
-type ManagerReturnType = Awaited<
+type ManagerFetchReturnType = Awaited<
   ReturnType<
     AnchorAccountCacheProvider["accountManagers"][keyof AnchorAccountCacheProvider["accountManagers"]]["fetch"]
+  >
+>
+
+type ManagerFetchMultiReturnType = Awaited<
+  ReturnType<
+    AnchorAccountCacheProvider["accountManagers"][keyof AnchorAccountCacheProvider["accountManagers"]]["fetchMulti"]
   >
 >
 
@@ -45,7 +51,8 @@ interface AnchorAccountCacheFns {
   ): Promise<SpecificAccountType<T> | undefined>
   fetchMulti<T extends Models.AccountTypes>(
     accountType: T,
-    publicKeys: PublicKey[]
+    publicKeys: PublicKey[],
+    useCache?: boolean
   ): Promise<SpecificAccountTypeMap<T>>
   fetchAndSub<T extends Models.AccountTypes>(
     accountType: T,
@@ -55,6 +62,9 @@ interface AnchorAccountCacheFns {
     accountType: T,
     publicKeys: PublicKey[]
   ): Promise<SpecificAccountTypeMap<T>>
+  fetchTokenAccountsByOwner(
+    owner: PublicKey
+  ): Promise<Record<string, Models.HToken.HToken>>
   unsubscribe: (accountType: Models.AccountTypes, publicKey: PublicKey) => void
   unsubscribeMulti: (
     accountType: Models.AccountTypes,
@@ -123,7 +133,7 @@ class AnchorAccountCacheProvider extends React.Component<
 
   private _setAccounts<T extends Models.AccountTypes>(
     accountType: T,
-    newAccountsMap: { [key: string]: ManagerReturnType }
+    newAccountsMap: { [key: string]: ManagerFetchReturnType }
   ) {
     const accountsMap = { ...this.state[accountType] }
     _.forEach(newAccountsMap, (account, publicKeyStr) => {
@@ -156,10 +166,34 @@ class AnchorAccountCacheProvider extends React.Component<
 
   async fetchMulti<T extends Models.AccountTypes>(
     accountType: T,
-    publicKeys: PublicKey[]
+    publicKeys: PublicKey[],
+    useCache = false
   ) {
     const accountManager = this.accountManagers[accountType]
-    const accounts = await accountManager.fetchMulti(publicKeys)
+    let accounts: ManagerFetchMultiReturnType = {}
+    let fetchPublicKeys: PublicKey[] = publicKeys
+    let cachePublicKeys: PublicKey[]
+    if (useCache) {
+      ;[cachePublicKeys, fetchPublicKeys] = _.partition(
+        publicKeys,
+        (publicKey) => this.state[accountType][publicKey.toString()]
+      )
+      accounts = _.reduce(
+        cachePublicKeys,
+        (accum: ManagerFetchMultiReturnType, publicKey) => {
+          accum[publicKey.toString()] =
+            this.state[accountType][publicKey.toString()]
+          return accum
+        },
+        {}
+      )
+    }
+    if (!_.isEmpty(fetchPublicKeys)) {
+      accounts = _.assign(
+        accounts,
+        await accountManager.fetchMulti(fetchPublicKeys)
+      )
+    }
     this._setAccounts(accountType, accounts)
     return accounts as SpecificAccountTypeMap<T>
   }
@@ -190,6 +224,14 @@ class AnchorAccountCacheProvider extends React.Component<
     return retval as SpecificAccountTypeMap<T>
   }
 
+  async fetchTokenAccountsByOwner(owner: PublicKey) {
+    const tokenAccountsMap = await this.accountManagers[
+      Models.HToken.AccountType
+    ].getTokenAccountsByOwner(owner)
+    this._setAccounts(Models.HToken.AccountType, tokenAccountsMap)
+    return tokenAccountsMap
+  }
+
   unsubscribe = (accountType: Models.AccountTypes, publicKey: PublicKey) => {
     const accountManager = this.accountManagers[accountType]
     accountManager.unsubscribe(publicKey)
@@ -213,6 +255,7 @@ class AnchorAccountCacheProvider extends React.Component<
           fetchMulti: this.fetchMulti.bind(this),
           fetchAndSub: this.fetchAndSub.bind(this),
           fetchAndSubMulti: this.fetchAndSubMulti.bind(this),
+          fetchTokenAccountsByOwner: this.fetchTokenAccountsByOwner.bind(this),
           unsubscribe: this.unsubscribe.bind(this),
           unsubscribeMulti: this.unsubscribeMulti.bind(this),
         }}

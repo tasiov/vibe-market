@@ -14,7 +14,6 @@ import { PublicKey } from "@solana/web3.js"
 const WhitelistPage = () => {
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
   const [market] = useAccount("market", ADDRESS_VIBE_MARKET)
-  console.log("market", market)
 
   const wallet = useAnchorWallet()
   const anchorAccountCache = useAnchorAccountCache()

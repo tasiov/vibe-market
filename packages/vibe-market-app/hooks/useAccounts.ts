@@ -7,11 +7,17 @@ import {
   SpecificAccountType,
 } from "../contexts/AnchorAccountsCacheProvider"
 
+type DefaultOptions = {
+  subscribe?: boolean
+  useCache?: boolean
+}
+
 export function useAccount<T extends AccountTypes>(
   accountType: T,
   publicKey: PublicKey | undefined,
-  subscribe = true
+  options?: DefaultOptions
 ): [SpecificAccountType<T> | undefined, boolean] {
+  const hookOptions = { subscribe: false, useCache: false, ...options }
   const anchorAccountCache = useContext(AnchorAccountCacheContext)
   const publicKey58 = publicKey?.toBase58()
   const [loading, setLoading] = useState(false)
@@ -23,20 +29,30 @@ export function useAccount<T extends AccountTypes>(
 
     ;(async function () {
       setLoading(true)
-      if (subscribe) {
+      if (hookOptions.subscribe) {
         await anchorAccountCache.fetchAndSub(accountType, publicKey)
       } else {
-        await anchorAccountCache.fetch(accountType, publicKey)
+        await anchorAccountCache.fetch(
+          accountType,
+          publicKey,
+          hookOptions.useCache
+        )
       }
       setLoading(false)
     })()
 
     return () => {
-      if (subscribe) {
+      if (hookOptions.subscribe) {
         anchorAccountCache.unsubscribe(accountType, publicKey)
       }
     }
-  }, [anchorAccountCache.isEnabled, accountType, publicKey58, subscribe])
+  }, [
+    anchorAccountCache.isEnabled,
+    accountType,
+    publicKey58,
+    hookOptions.subscribe,
+    hookOptions.useCache,
+  ])
 
   const anchorAccountCacheType =
     anchorAccountCache.isEnabled && anchorAccountCache[accountType]
@@ -56,8 +72,9 @@ export function useAccount<T extends AccountTypes>(
 export function useAccounts<T extends AccountTypes>(
   accountType: T,
   publicKeys: PublicKey[] | undefined,
-  subscribe = true
+  options?: DefaultOptions
 ): [{ [key: string]: SpecificAccountType<T> } | undefined, boolean] {
+  const hookOptions = { subscribe: false, useCache: false, ...options }
   const anchorAccountCache = useContext(AnchorAccountCacheContext)
   const publicKeys58 = _.map(publicKeys, (publicKey) => publicKey.toBase58())
   const publicKey58Str = _.join(publicKeys58, "")
@@ -70,20 +87,30 @@ export function useAccounts<T extends AccountTypes>(
 
     ;(async function () {
       setLoading(true)
-      if (subscribe) {
+      if (hookOptions.subscribe) {
         await anchorAccountCache.fetchAndSubMulti(accountType, publicKeys)
       } else {
-        await anchorAccountCache.fetchMulti(accountType, publicKeys)
+        await anchorAccountCache.fetchMulti(
+          accountType,
+          publicKeys,
+          hookOptions.useCache
+        )
       }
       setLoading(false)
     })()
 
     return () => {
-      if (subscribe) {
+      if (hookOptions.subscribe) {
         anchorAccountCache.unsubscribeMulti(accountType, publicKeys)
       }
     }
-  }, [anchorAccountCache.isEnabled, accountType, publicKey58Str, subscribe])
+  }, [
+    anchorAccountCache.isEnabled,
+    accountType,
+    publicKey58Str,
+    hookOptions.subscribe,
+    hookOptions.useCache,
+  ])
 
   const anchorAccountCacheType =
     anchorAccountCache.isEnabled && anchorAccountCache[accountType]

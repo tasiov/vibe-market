@@ -35,7 +35,9 @@ const CollectionsPage = () => {
     setTitle(event.target.value)
 
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
-  const [market] = useAccount("market", ADDRESS_VIBE_MARKET)
+  const [market] = useAccount("market", ADDRESS_VIBE_MARKET, {
+    subscribe: true,
+  })
 
   const createCollectionButtonDisabled =
     !anchorAccountCache.isEnabled || !wallet?.publicKey

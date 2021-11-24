@@ -15,8 +15,8 @@ import { useCluster, ClusterContextProvider } from "./cluster"
 import { FC, useMemo } from "react"
 
 const RPC_POOL_CLUSTER_MAP = {
-  [WalletAdapterNetwork.Devnet]: "https://hedgehog.devnet.rpcpool.com",
-  [WalletAdapterNetwork.Mainnet]: "https://hedgehog.rpcpool.com ",
+  [WalletAdapterNetwork.Devnet]: "https://api.devnet.solana.com",
+  [WalletAdapterNetwork.Mainnet]: "https://solana-api.projectserum.com",
 }
 
 const WalletConnectionProvider: FC = ({ children }) => {

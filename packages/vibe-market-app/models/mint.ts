@@ -54,7 +54,7 @@ export class HMintManager extends BaseRawAccountManager<HMintAccount, HMint> {
     } else {
       mintInfo.freezeAuthority = new PublicKey(
         mintInfo.freezeAuthority
-      ).toString
+      ).toString()
     }
 
     return new HMint(publicKey, mintInfo)

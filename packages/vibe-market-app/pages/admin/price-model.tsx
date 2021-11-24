@@ -37,7 +37,9 @@ const PriceModelPage = () => {
     "ADDRESS_NATIVE_MINT",
     "ADDRESS_VIBE_MARKET"
   )
-  const [market] = useAccount("market", ADDRESS_VIBE_MARKET)
+  const [market] = useAccount("market", ADDRESS_VIBE_MARKET, {
+    subscribe: true,
+  })
 
   const [salePrices, setSalePrices] = useState<SalePrice[]>(salePriceDefault)
   const handleMintChange = (

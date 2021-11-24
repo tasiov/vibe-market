@@ -2,8 +2,9 @@ import _ from "lodash"
 import { Connection, PublicKey } from "@solana/web3.js"
 import { BaseRawAccount, BaseRawAccountManager } from "./baseRaw"
 import { AccountLayout, u64 } from "@solana/spl-token"
+import { getClusterConstants } from "../constants"
 
-export const AccountType = "hTokenAcount"
+export const AccountType = "hTokenAccount"
 
 export interface HTokenAccount {
   isFrozen: boolean
@@ -95,5 +96,23 @@ export class HTokenManager extends BaseRawAccountManager<
     }
 
     return new HToken(publicKey, accountInfo)
+  }
+
+  getTokenAccountsByOwner = async (owner: PublicKey) => {
+    const { PROGRAM_TOKEN } = getClusterConstants("PROGRAM_TOKEN")
+    const results = await this.connection.getTokenAccountsByOwner(owner, {
+      programId: PROGRAM_TOKEN,
+    })
+    const domainEntities = await Promise.all(
+      _.map(results.value, (raw) => this.transform(raw.account, raw.pubkey))
+    )
+    return _.reduce(
+      domainEntities,
+      (accum: Record<string, HToken>, entity) => {
+        accum[entity.publicKey.toString()] = entity
+        return accum
+      },
+      {}
+    )
   }
 }

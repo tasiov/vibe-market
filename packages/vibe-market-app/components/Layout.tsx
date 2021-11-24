@@ -58,7 +58,7 @@ const AdminLinkItems: Array<LinkItemProps> = [
   {
     name: "Add NFT",
     icon: FiImage,
-    href: "/admin/price-model",
+    href: "/admin/add-nft",
   },
   {
     name: "Withdraw Liquidity",
@@ -118,9 +118,9 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
   const isAdmin = useIsAdmin(ADDRESS_VIBE_MARKET)
   const logoWidth =
-    useBreakpointValue({ base: 67, md: 134, lg: 167, xl: 167 }) || 201
+    useBreakpointValue({ base: 134, md: 134, lg: 167, xl: 167 }) || 201
   const logoHeight =
-    useBreakpointValue({ base: 20, md: 40, lg: 50, xl: 50 }) || 60
+    useBreakpointValue({ base: 40, md: 40, lg: 50, xl: 50 }) || 60
 
   return (
     <Box
@@ -136,7 +136,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
       <Flex
         h="20"
         alignItems="center"
-        mx="8"
+        p="4"
         w="full"
         justifyContent="space-between"
       >
