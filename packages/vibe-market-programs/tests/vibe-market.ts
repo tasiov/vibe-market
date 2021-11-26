@@ -317,7 +317,7 @@ describe("vibe-market", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       nftMint.publicKey,
-      marketAddress,
+      collectionAddress,
       true
     )
 
@@ -360,8 +360,7 @@ describe("vibe-market", () => {
     )
     assert.ok(nftBucketAccount.nonce === 0)
     assert.ok(
-      nftBucketAccount.tokenAccount.toString() ===
-        programAssociatedAddress.toString()
+      nftBucketAccount.nftMint.toString() === nftMint.publicKey.toString()
     )
     assert.ok(
       nftBucketAccount.priceModel.toString() === priceModelAddress.toString()
@@ -413,7 +412,7 @@ describe("vibe-market", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       nftMint.publicKey,
-      marketAddress,
+      collectionAddress,
       true
     )
 
@@ -426,8 +425,8 @@ describe("vibe-market", () => {
         admin: admin.publicKey,
         rentRefund: admin.publicKey,
         priceModel: priceModelAddress,
-        globalState: globalStateAddress,
         market: marketAddress,
+        collection: collectionAddress,
         withdrawListItem: nftBucket.publicKey,
         programNftAccount: programNftAccountAddress,
         programNftMint: nftMint.publicKey,
@@ -511,7 +510,7 @@ describe("vibe-market", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       nftMint.publicKey,
-      marketAddress,
+      collectionAddress,
       true
     )
 
@@ -544,8 +543,8 @@ describe("vibe-market", () => {
         owner: user.publicKey,
         rentRefund: admin.publicKey,
         priceModel: priceModelAddress,
-        globalState: globalStateAddress,
         market: marketAddress,
+        collection: collectionAddress,
         purchaseListItem: nftBucket.publicKey,
         debitMint: paymentMint.publicKey,
         debitAccount: userPaymentAccountAddress,

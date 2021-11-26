@@ -85,14 +85,14 @@ module.exports = async function (provider) {
   // const [marketAddress, marketAddressNonce] =
   //   await seedAddresses.getMarketAddress(globalStateAddress, 0)
 
-  await addAdmin(
-    vibeMarketProgram,
-    walletPublicKey,
-    marketAddress,
-    new PublicKey("GfP2U9noTRDNY3tVp9bicsnN34XX72rJ88eNjsaLih8x")
-  )
+  // await addAdmin(
+  //   vibeMarketProgram,
+  //   walletPublicKey,
+  //   marketAddress,
+  //   new PublicKey("GfP2U9noTRDNY3tVp9bicsnN34XX72rJ88eNjsaLih8x")
+  // )
 
-  const market = await vibeMarketProgram.account.market.fetch(marketAddress)
+  // const market = await vibeMarketProgram.account.market.fetch(marketAddress)
 
-  console.log("market", market)
+  // console.log("market", market)
 }
