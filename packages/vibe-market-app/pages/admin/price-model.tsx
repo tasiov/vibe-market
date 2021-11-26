@@ -1,7 +1,6 @@
 import _ from "lodash"
 import {
   Heading,
-  Code,
   NumberInput,
   NumberInputField,
   NumberInputStepper,
@@ -10,26 +9,26 @@ import {
   Input,
   Button,
   IconButton,
-  Wrap,
-  Text,
 } from "@chakra-ui/react"
-import { Center, VStack, StackDivider, Flex } from "@chakra-ui/layout"
-import { useAccount, useAccounts } from "../../hooks/useAccounts"
+import { Center, VStack, StackDivider, Box } from "@chakra-ui/layout"
+import { useAccount } from "../../hooks/useAccounts"
 import { getClusterConstants } from "../../constants"
 import createPriceModel from "../../solana/scripts/createPriceModel"
 import { useAnchorWallet } from "@solana/wallet-adapter-react"
 import { useCallback, useState } from "react"
 import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvider"
 import useTxCallback from "../../hooks/useTxCallback"
-import { PublicKey } from "@solana/web3.js"
 import { FiPlus } from "react-icons/fi"
 import { usePriceModelAddresses } from "../../hooks/useSeedAddress"
+import { AccountViewer } from "../../components/AccountViewer"
+import { useCluster } from "../../contexts/cluster"
 
 type SalePrice = { mint: string; amount: number }
 
 const salePriceDefault = [{ mint: "", amount: 0 }]
 
 const PriceModelPage = () => {
+  const cluster = useCluster()
   const wallet = useAnchorWallet()
   const anchorAccountCache = useAnchorAccountCache()
 
@@ -90,14 +89,6 @@ const PriceModelPage = () => {
     market?.publicKey,
     market?.data.numPriceModels
   )
-  const [priceModelAddress, setPriceModelAddress] = useState<
-    string | undefined
-  >(undefined)
-
-  const [priceModel] = useAccount(
-    "priceModel",
-    priceModelAddress ? new PublicKey(priceModelAddress) : undefined
-  )
 
   return (
     <VStack
@@ -106,101 +97,6 @@ const PriceModelPage = () => {
       spacing={16}
       textAlign="center"
     >
-      <Center flexDirection="column" mb="16">
-        <Heading w="full" mb="8">
-          View Price Models
-        </Heading>
-        <Wrap spacing="16" justify="center" minH="96">
-          <Flex
-            h="80"
-            w="96"
-            p="4"
-            flexDirection="column"
-            overflow="auto"
-            border="1px solid black"
-            borderRadius="10px"
-          >
-            {priceModelAddresses &&
-              _.map(priceModelAddresses, (publicKey) => (
-                <Button
-                  key={publicKey.toString()}
-                  value={publicKey.toString()}
-                  size="xs"
-                  mb="2"
-                  p="1"
-                  onClick={setPriceModelAddress.bind(
-                    null,
-                    publicKey.toString()
-                  )}
-                >
-                  {publicKey.toString()}
-                </Button>
-              ))}
-          </Flex>
-          <Center>
-            <Flex
-              w="96"
-              p="4"
-              minH="80"
-              flexDirection="column"
-              border="1px solid black"
-              borderRadius="10px"
-            >
-              {priceModel && (
-                <Code
-                  w="full"
-                  textAlign="left"
-                  mb="2"
-                  key={`priceModel-data-publicKey`}
-                  backgroundColor="transparent"
-                >{`publicKey: ${priceModel.publicKey.toString()}`}</Code>
-              )}
-              {priceModel &&
-                _.map(
-                  Object.keys(priceModel.data),
-                  (key: keyof typeof priceModel.data) =>
-                    key === "salePrices" ? (
-                      _.map(priceModel.data.salePrices, (salePrice, index) => {
-                        return (
-                          <>
-                            <Code
-                              w="full"
-                              textAlign="left"
-                              mb="2"
-                              key={`priceModel-data-sale-price-${index}`}
-                              backgroundColor="transparent"
-                            >{`Sale Price (${index})`}</Code>
-                            <Code
-                              w="full"
-                              textAlign="left"
-                              mb="2"
-                              key={`priceModel-data-sale-price-${index}-mint`}
-                              backgroundColor="transparent"
-                            >{`Mint: ${salePrice.mint}`}</Code>
-                            <Code
-                              w="full"
-                              textAlign="left"
-                              mb="2"
-                              key={`priceModel-data-sale-price-${index}-amount`}
-                              backgroundColor="transparent"
-                            >{`Amount: ${salePrice.amount}`}</Code>
-                          </>
-                        )
-                      })
-                    ) : (
-                      <Code
-                        w="full"
-                        textAlign="left"
-                        mb="2"
-                        key={`priceModel-data-${key}`}
-                        backgroundColor="transparent"
-                      >{`${key}: ${priceModel.data[key]}`}</Code>
-                    )
-                )}
-            </Flex>
-          </Center>
-        </Wrap>
-      </Center>
       <Center flexDirection="column">
         <Heading w="full">Create Price Model</Heading>
         <VStack mt="8" w="full" spacing="8" flexDirection="column">
@@ -243,7 +139,6 @@ const PriceModelPage = () => {
             onClick={handleSalePriceAdd}
             disabled={salePrices.length >= 8}
           />
-
           <Button
             colorScheme="purple"
             mt="4"
@@ -255,11 +150,14 @@ const PriceModelPage = () => {
           </Button>
         </VStack>
       </Center>
-      <Center flexDirection="column">
-        <Heading w="full" mb="4">
-          Mint Reference
+      <Center flexDirection="column" mb="16">
+        <Heading w="full" mb="8">
+          View Price Models
         </Heading>
-        <Text>{`Wrapped Sol: ${ADDRESS_NATIVE_MINT.toString()}`}</Text>
+        <AccountViewer
+          accountType="priceModel"
+          accountAddresses={priceModelAddresses}
+        />
       </Center>
     </VStack>
   )
