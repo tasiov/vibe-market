@@ -8,7 +8,7 @@ export const AccountType = "nftBucket"
 
 export interface NftBucketAccount {
   nonce: number
-  tokenAccount: string
+  nftMint: string
   priceModel: string
   prevListItem: string
   nextListItem: string
@@ -28,7 +28,7 @@ export class NftBucketManager extends BaseAnchorAccountManager<
   isValid = (entity: any): entity is NftBucket =>
     entity instanceof NftBucket &&
     typeof entity.data.nonce === "number" &&
-    typeof entity.data.tokenAccount === "string" &&
+    typeof entity.data.nftMint === "string" &&
     typeof entity.data.priceModel === "string" &&
     typeof entity.data.prevListItem === "string" &&
     typeof entity.data.nextListItem === "string" &&
@@ -36,7 +36,7 @@ export class NftBucketManager extends BaseAnchorAccountManager<
 
   toDomain = async (account: any, publicKey: PublicKey) => {
     const accountData = { ...account }
-    accountData.tokenAccount = accountData.tokenAccount.toString()
+    accountData.nftMint = accountData.nftMint.toString()
     accountData.priceModel = accountData.priceModel.toString()
     accountData.prevListItem = accountData.prevListItem.toString()
     accountData.nextListItem = accountData.nextListItem.toString()

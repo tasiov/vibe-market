@@ -61,7 +61,7 @@ const addNft = async (
     PROGRAM_ASSOCIATED_TOKEN,
     PROGRAM_TOKEN,
     nftMint,
-    ADDRESS_VIBE_MARKET,
+    collectionPublicKey,
     true
   )
 
