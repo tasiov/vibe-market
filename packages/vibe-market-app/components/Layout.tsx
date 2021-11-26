@@ -1,3 +1,4 @@
+import _ from "lodash"
 import Image from "next/image"
 import Link from "next/link"
 import React, { ReactNode, useEffect, useRef } from "react"
@@ -32,6 +33,8 @@ import { ReactText } from "react"
 import { Wallet } from "./Wallet"
 import { useIsAdmin } from "../hooks/useIsAdmin"
 import { getClusterConstants } from "../constants"
+import { useAccount, useAccounts } from "../hooks/useAccounts"
+import { useCollectionAddresses } from "../hooks/useSeedAddress"
 
 interface LinkItemProps {
   name: string
@@ -74,7 +77,7 @@ export default function SidebarWithHeader({
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure()
   return (
-    <Box minH="100vh" bg={useColorModeValue("brandBg.100", "gray.900")}>
+    <Box minH="100vh" bg={useColorModeValue("brandPink.100", "gray.900")}>
       <SidebarContent
         onClose={() => onClose}
         display={{ base: "none", md: "block" }}
@@ -117,15 +120,21 @@ interface SidebarProps extends BoxProps {
 const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
   const isAdmin = useIsAdmin(ADDRESS_VIBE_MARKET)
-  const logoWidth =
-    useBreakpointValue({ base: 134, md: 134, lg: 167, xl: 167 }) || 201
-  const logoHeight =
-    useBreakpointValue({ base: 40, md: 40, lg: 50, xl: 50 }) || 60
+
+  const [market] = useAccount("market", ADDRESS_VIBE_MARKET, { useCache: true })
+  const collectionAddresses = useCollectionAddresses(
+    market?.publicKey,
+    market?.data.numCollections
+  )
+
+  const [collections, collectionsLoading] = useAccounts(
+    "collection",
+    collectionAddresses
+  )
 
   return (
     <Box
-      transition="3s ease"
-      bg={useColorModeValue("brandBg.100", "gray.900")}
+      bg={useColorModeValue("brandBlue.100", "gray.900")}
       borderRight="1px"
       borderRightColor={useColorModeValue("gray.200", "gray.700")}
       w={{ base: "full", md: "25%", lg: "20%", xl: "15%" }}
@@ -136,18 +145,43 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
       <Flex
         h="20"
         alignItems="center"
-        p="4"
+        px="4"
+        py="2"
         w="full"
-        justifyContent="space-between"
+        justifyContent="center"
       >
-        <Image
-          src="/vibe-logo-lg.png"
-          width={logoWidth}
-          height={logoHeight}
-          alt="Vibe Logo"
-        />
+        <Link href="/" passHref>
+          <Box h="64px" w="64px" cursor="pointer">
+            <Image
+              src="/vibe-logo-lg.png"
+              width={64}
+              height={64}
+              alt="Vibe Logo"
+            />
+          </Box>
+        </Link>
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
       </Flex>
+      <Flex
+        align="center"
+        p="2"
+        mt="4"
+        mx="4"
+        role="group"
+        borderBottom="2px"
+        fontWeight="900"
+      >
+        <Text fontSize="2xl">Collections</Text>
+      </Flex>
+      {collections &&
+        _.map(_.values(collections), (collection) => (
+          <NavItem
+            key={collection.data.title}
+            href={`/collection/${collection.publicKey.toString()}`}
+          >
+            {collection.data.title}
+          </NavItem>
+        ))}
       {isAdmin && (
         <>
           <Flex
@@ -156,13 +190,10 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
             mt="4"
             mx="4"
             role="group"
-            fontWeight="600"
             borderBottom="2px"
-            borderBottomColor={"black"}
+            fontWeight="900"
           >
-            <Text fontSize="2xl" fontWeight="bold">
-              Admin
-            </Text>
+            <Text fontSize="2xl">Admin</Text>
           </Flex>
           {AdminLinkItems.map((link) => (
             <NavItem key={link.name} icon={link.icon} href={link.href}>
@@ -177,7 +208,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
 
 interface NavItemProps extends FlexProps {
   href: string
-  icon: IconType
+  icon?: IconType
   children: ReactText
 }
 const NavItem = ({ href, icon, children, ...rest }: NavItemProps) => {
@@ -191,9 +222,9 @@ const NavItem = ({ href, icon, children, ...rest }: NavItemProps) => {
         borderRadius="lg"
         role="group"
         cursor="pointer"
-        fontWeight="600"
+        fontWeight="900"
         _hover={{
-          color: "brandPurp.100",
+          color: "brandPink.900",
         }}
         {...rest}
       >
@@ -202,7 +233,7 @@ const NavItem = ({ href, icon, children, ...rest }: NavItemProps) => {
             mr="4"
             fontSize="16"
             _groupHover={{
-              color: "brandPurp.100",
+              color: "brandPink.900",
             }}
             as={icon}
           />
@@ -225,7 +256,7 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
       px={{ base: 4, md: 4 }}
       height="20"
       alignItems="center"
-      bg={useColorModeValue("brandBg.100", "gray.900")}
+      bg={useColorModeValue("brandPink.100", "gray.900")}
       borderBottomWidth="1px"
       borderBottomColor={useColorModeValue("gray.200", "gray.700")}
       justifyContent={{ base: "space-between", md: "flex-end" }}

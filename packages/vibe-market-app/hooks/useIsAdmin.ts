@@ -6,7 +6,7 @@ import { useMemo } from "react"
 
 export function useIsAdmin(marketAddress: PublicKey) {
   const wallet = useAnchorWallet()
-  const [market] = useAccount("market", marketAddress)
+  const [market] = useAccount("market", marketAddress, { subscribe: true })
 
   const isAdmin = useMemo(() => {
     if (!wallet || !market) {
