@@ -13,4 +13,13 @@ module.exports = withTM({
     }
     return config
   },
+  redirects: async function () {
+    return [
+      {
+        source: "/",
+        destination: "/collection/9BZ8qv66erfbNd9ptaBXPVUhbvXjmq5dwHrEFekaypjv",
+        permanent: false,
+      },
+    ]
+  },
 })
