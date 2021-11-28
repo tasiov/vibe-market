@@ -8,6 +8,7 @@ export const theme = extendTheme({
     },
     brandPink: {
       100: "#f399af",
+      200: "#e77da0",
       900: "#b39eee",
     },
     brandBlue: {

@@ -10,6 +10,7 @@ import { ClusterContextProvider } from "../contexts/cluster"
 import { getVibeMarketProgram } from "../solana/getPrograms"
 import SidebarWithHeader from "../components/Layout"
 import { theme } from "../styles/theme"
+import { VibeMarket } from "../solana/vibeMarket"
 import "../styles/globals.css"
 
 const WalletConnectionProvider = dynamic(
@@ -22,9 +23,8 @@ const WalletConnectionProvider = dynamic(
 const AccountsCacheProvidersSetup = ({ children }: { children: ReactNode }) => {
   const { connection } = useConnection()
   const wallet = useAnchorWallet()
-  const [vibeMarketProgram, setVibeMarketProgram] = useState<Program | null>(
-    null
-  )
+  const [vibeMarketProgram, setVibeMarketProgram] =
+    useState<Program<VibeMarket> | null>(null)
 
   useEffect(() => {
     ;(async function () {

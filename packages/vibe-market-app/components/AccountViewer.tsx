@@ -6,16 +6,16 @@ import { Center, Box, VStack } from "@chakra-ui/layout"
 import { AccountTypes } from "../models"
 import { useAccount } from "../hooks/useAccounts"
 
-export const renderObj = (obj: any): JSX.Element[] => {
+export const renderObj = (obj: any, prefix?: string): JSX.Element[] => {
   return _.flatten(
     _.map(obj, (item, key) => {
-      if (_.isObject(item)) return renderObj(item)
+      if (_.isObject(item)) return renderObj(item, key)
       return (
         <Code
           w="full"
           textAlign="left"
           mb="2"
-          key={`item-${key}`}
+          key={`item-${prefix ? prefix + "-" + key : key}`}
           backgroundColor="transparent"
         >
           {`${key}: ${item}`}

@@ -134,12 +134,13 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
 
   return (
     <Box
-      bg={useColorModeValue("brandBlue.100", "gray.900")}
+      bg={useColorModeValue("brandPink.200", "gray.900")}
       borderRight="1px"
       borderRightColor={useColorModeValue("gray.200", "gray.700")}
       w={{ base: "full", md: "25%", lg: "20%", xl: "15%" }}
       pos="fixed"
       h="full"
+      overflow="auto"
       {...rest}
     >
       <Flex
@@ -170,6 +171,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         role="group"
         borderBottom="2px"
         fontWeight="900"
+        color="white"
       >
         <Text fontSize="2xl">Collections</Text>
       </Flex>
@@ -192,6 +194,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
             role="group"
             borderBottom="2px"
             fontWeight="900"
+            color="white"
           >
             <Text fontSize="2xl">Admin</Text>
           </Flex>
@@ -223,6 +226,7 @@ const NavItem = ({ href, icon, children, ...rest }: NavItemProps) => {
         role="group"
         cursor="pointer"
         fontWeight="900"
+        color="white"
         _hover={{
           color: "brandPink.900",
         }}
@@ -252,11 +256,10 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
   const isAdmin = useIsAdmin(ADDRESS_VIBE_MARKET)
   return (
     <Flex
-      ml={{ base: 0, md: 60 }}
       px={{ base: 4, md: 4 }}
       height="20"
       alignItems="center"
-      bg={useColorModeValue("brandPink.100", "gray.900")}
+      bg={useColorModeValue("brandBlue.100", "gray.900")}
       borderBottomWidth="1px"
       borderBottomColor={useColorModeValue("gray.200", "gray.700")}
       justifyContent={{ base: "space-between", md: "flex-end" }}

@@ -10,7 +10,7 @@ import "@solana/wallet-adapter-react-ui/styles.css"
 export const Wallet: FC = () => {
   return (
     <WalletModalProvider>
-      <WalletMultiButton style={{ backgroundColor: "#8333fe" }} />
+      <WalletMultiButton style={{ backgroundColor: "#b39eee" }} />
     </WalletModalProvider>
   )
 }
