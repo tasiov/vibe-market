@@ -66,7 +66,7 @@ const AdminLinkItems: Array<LinkItemProps> = [
   {
     name: "Withdraw Liquidity",
     icon: FiLogOut,
-    href: "/admin/price-model",
+    href: "/admin/withdraw-liquidity",
   },
 ]
 
