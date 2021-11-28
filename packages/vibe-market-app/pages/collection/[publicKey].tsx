@@ -404,104 +404,136 @@ const NftPurchasePage = () => {
           disabled={!rightButtonEnabled}
         />
       </Center>
-      <SimpleGrid
-        columns={numColumnsPerPage}
-        spacing={16}
-        maxW="900px"
-        minH="70vh"
-        w="full"
-      >
-        {nftBucketAddressesLoading &&
-          numBucketsPerPage &&
-          _.map(_.range(numBucketsPerPage), (index) => {
-            return (
-              <Skeleton
-                key={`skeleton-${index}`}
-                startColor="brandPink.100"
-                endColor="brandPink.900"
-                boxShadow="md"
-                borderRadius="md"
-              >
-                <Box bg="beige" h="280px" w="full"></Box>
-              </Skeleton>
-            )
-          })}
-        {purchaseItems &&
-          _.map(purchaseItems, (purchaseItem) => {
-            const { nftBucket, priceModel, metadata, staticData } = purchaseItem
-            return (
-              <Box
-                bg="beige"
-                h="280px"
-                w="full"
-                boxShadow="md"
-                borderRadius="md"
-                cursor="pointer"
-                overflow="hidden"
-                key={purchaseItem.nftBucket.publicKey.toString()}
-                onClick={() => setSelectedPurchaseItem(purchaseItem)}
-              >
-                <VStack h="full">
-                  <Center bgColor="gray.400" minH="55%" maxH="55%" w="full">
-                    {staticData && (
-                      <Image
-                        alt="selected nft"
-                        objectFit="contain"
-                        h="full"
-                        boxShadow="md"
-                        src={staticData.data.image}
-                      />
-                    )}
-                  </Center>
-                  {metadata && staticData && (
-                    <VStack w="full" p="4">
-                      <Heading size="sm">
-                        {getItemHeaderText(metadata, staticData)}
-                      </Heading>
-                      {priceModel && tokenRegistry && (
-                        <SimpleGrid
-                          columns={
-                            priceModel.data.salePrices.length > 4 ? 3 : 2
-                          }
-                          spacing={2}
-                          w="full"
+      {!nftBucketAddressesLoading &&
+        !purchaseItems &&
+        _.isEmpty(purchaseItems) && (
+          <Center
+            w="full"
+            position="relative"
+            maxW={{ base: "auto", lg: "70%" }}
+          >
+            <Text
+              position="absolute"
+              top={{ base: "2", md: "8" }}
+              color="white"
+              fontSize={{ base: "16", md: "24", lg: "32" }}
+              fontWeight="800"
+            >
+              NFTs Not Found
+            </Text>
+            <Image
+              alt="token image"
+              w="full"
+              h="full"
+              borderRadius="20"
+              src={"/nfts-not-found.png"}
+            />
+          </Center>
+        )}
+      {(nftBucketAddressesLoading ||
+        (purchaseItems && !_.isEmpty(purchaseItems))) && (
+        <SimpleGrid
+          columns={numColumnsPerPage}
+          spacing={16}
+          maxW="900px"
+          minH="70vh"
+          w="full"
+        >
+          {nftBucketAddressesLoading &&
+            numBucketsPerPage &&
+            _.map(_.range(numBucketsPerPage), (index) => {
+              return (
+                <Skeleton
+                  key={`skeleton-${index}`}
+                  startColor="brandPink.100"
+                  endColor="brandPink.900"
+                  boxShadow="md"
+                  borderRadius="md"
+                >
+                  <Box bg="beige" h="280px" w="full"></Box>
+                </Skeleton>
+              )
+            })}
+          {purchaseItems &&
+            _.map(purchaseItems, (purchaseItem) => {
+              const { nftBucket, priceModel, metadata, staticData } =
+                purchaseItem
+              return (
+                <Box
+                  bg="beige"
+                  h="280px"
+                  w="full"
+                  boxShadow="md"
+                  borderRadius="md"
+                  cursor="pointer"
+                  overflow="hidden"
+                  key={purchaseItem.nftBucket.publicKey.toString()}
+                  onClick={() => setSelectedPurchaseItem(purchaseItem)}
+                >
+                  <VStack h="full">
+                    <Center bgColor="gray.400" minH="55%" maxH="55%" w="full">
+                      {staticData && (
+                        <Image
+                          alt="selected nft"
+                          objectFit="contain"
                           h="full"
-                        >
-                          {_.map(
-                            priceModel.data.salePrices,
-                            (salePrice, index) => (
-                              <HStack
-                                justifyContent="center"
-                                alignItems="center"
-                                key={`sale-price-${index}`}
-                              >
-                                {tokenRegistry[salePrice.mint].logoURI && (
-                                  <Image
-                                    alt="token image"
-                                    w="4"
-                                    h="4"
-                                    borderRadius="20"
-                                    src={tokenRegistry[salePrice.mint].logoURI}
-                                  />
-                                )}
-                                <Text fontSize="14px">{`${
-                                  tokenRegistry[salePrice.mint].symbol
-                                } ${fromRawAmount(
-                                  tokenRegistry[salePrice.mint].decimals,
-                                  salePrice.amount
-                                )}`}</Text>
-                              </HStack>
-                            )
-                          )}
-                        </SimpleGrid>
+                          boxShadow="md"
+                          src={staticData.data.image}
+                        />
                       )}
-                    </VStack>
-                  )}
-                </VStack>
-              </Box>
-            )
-          })}
-      </SimpleGrid>
+                    </Center>
+                    {metadata && staticData && (
+                      <VStack w="full" p="4">
+                        <Heading size="sm">
+                          {getItemHeaderText(metadata, staticData)}
+                        </Heading>
+                        {priceModel && tokenRegistry && (
+                          <SimpleGrid
+                            columns={
+                              priceModel.data.salePrices.length > 4 ? 3 : 2
+                            }
+                            spacing={2}
+                            w="full"
+                            h="full"
+                          >
+                            {_.map(
+                              priceModel.data.salePrices,
+                              (salePrice, index) => (
+                                <HStack
+                                  justifyContent="center"
+                                  alignItems="center"
+                                  key={`sale-price-${index}`}
+                                >
+                                  {tokenRegistry[salePrice.mint].logoURI && (
+                                    <Image
+                                      alt="token image"
+                                      w="4"
+                                      h="4"
+                                      borderRadius="20"
+                                      src={
+                                        tokenRegistry[salePrice.mint].logoURI
+                                      }
+                                    />
+                                  )}
+                                  <Text fontSize="14px">{`${
+                                    tokenRegistry[salePrice.mint].symbol
+                                  } ${fromRawAmount(
+                                    tokenRegistry[salePrice.mint].decimals,
+                                    salePrice.amount
+                                  )}`}</Text>
+                                </HStack>
+                              )
+                            )}
+                          </SimpleGrid>
+                        )}
+                      </VStack>
+                    )}
+                  </VStack>
+                </Box>
+              )
+            })}
+        </SimpleGrid>
+      )}
     </Center>
   )
 }
