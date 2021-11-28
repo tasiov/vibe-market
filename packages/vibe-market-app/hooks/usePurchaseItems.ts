@@ -101,7 +101,6 @@ export const usePurchaseItems = (nftBuckets: NftBucket[] | undefined) => {
     Record<string, any> | undefined
   >()
 
-  console.log("nftBuckets", nftBuckets)
   const priceModelAddresses = _.map(
     nftBuckets,
     (nftBucket) => new PublicKey(nftBucket.data.priceModel)

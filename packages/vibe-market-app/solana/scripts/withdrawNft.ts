@@ -48,7 +48,6 @@ const withdrawNft = async (
     true
   )
 
-  console.log("withdrawNftBucket.publicKey", withdrawNftBucket.publicKey)
   await anchorAccountCache.vibeMarketProgram.rpc.withdrawNft({
     accounts: {
       admin: walletPublicKey,

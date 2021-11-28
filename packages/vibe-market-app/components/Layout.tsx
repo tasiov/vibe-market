@@ -149,7 +149,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         px="4"
         py="2"
         w="full"
-        justifyContent="center"
+        justifyContent={{ base: "space-between", md: "center" }}
       >
         <Link href="/" passHref>
           <Box h="64px" w="64px" cursor="pointer">
@@ -273,9 +273,9 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
         icon={<FiMenu />}
       />
 
-      <HStack spacing={{ base: "0", md: "6" }}>
+      <HStack spacing={{ base: "2", md: "6" }}>
         {isAdmin && (
-          <Badge mr="10" fontSize="1em" colorScheme="red">
+          <Badge fontSize="1em" colorScheme="red">
             ADMIN
           </Badge>
         )}

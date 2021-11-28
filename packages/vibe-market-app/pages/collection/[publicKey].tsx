@@ -193,8 +193,6 @@ const NftPurchasePage = () => {
     ) {
       return
     }
-    console.log("wallet.publicKey", wallet.publicKey.toString())
-    console.log(collection.publicKey, selectedPurchaseItem.nftBucket.publicKey)
     await withdrawNft(
       anchorAccountCache,
       wallet.publicKey,
@@ -388,7 +386,6 @@ const NftPurchasePage = () => {
         maxW="900px"
         maxH="full"
         w="full"
-        h="70vh"
       >
         {!purchaseItems &&
           numBucketsPerPage &&
@@ -411,7 +408,7 @@ const NftPurchasePage = () => {
             return (
               <Box
                 bg="beige"
-                h="80"
+                h="280px"
                 w="full"
                 boxShadow="md"
                 borderRadius="md"
@@ -452,6 +449,7 @@ const NftPurchasePage = () => {
                               <HStack
                                 justifyContent="center"
                                 alignItems="center"
+                                key={`sale-price-${index}`}
                               >
                                 {tokenRegistry[salePrice.mint].logoURI && (
                                   <Image

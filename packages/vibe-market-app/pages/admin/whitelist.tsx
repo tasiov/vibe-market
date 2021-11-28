@@ -93,7 +93,7 @@ const WhitelistPage = () => {
         </Text>
         {market &&
           _.map(market.data.whitelist, (publicKeyStr) => (
-            <Text>{publicKeyStr}</Text>
+            <Text key={publicKeyStr}>{publicKeyStr}</Text>
           ))}
       </Container>
       <Flex mb="8" w="96">

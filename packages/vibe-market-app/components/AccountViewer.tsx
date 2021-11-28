@@ -44,8 +44,6 @@ export const AccountViewer = ({
     selectedAccount ? new PublicKey(selectedAccount) : undefined
   )
 
-  console.log("account", account)
-
   return (
     <VStack w="96" spacing="8">
       <Select
