@@ -21,14 +21,14 @@ import {
   Radio,
   RadioGroup,
 } from "@chakra-ui/react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useAccount, useAccounts } from "../../hooks/useAccounts"
 import { PublicKey } from "@solana/web3.js"
 import { useBreakpointValue } from "@chakra-ui/media-query"
 import {
-  useNftBuckets,
   usePurchaseItems,
   PurchaseItem,
+  useNftBucketAddresses,
 } from "../../hooks/usePurchaseItems"
 import { shortenAddress } from "../../solana/address"
 import { programs } from "@metaplex/js"
@@ -45,6 +45,7 @@ import { useBalance } from "../../hooks/useBalance"
 import { ADDRESS_NATIVE_MINT } from "../../constants/shared"
 import { useIsAdmin } from "../../hooks/useIsAdmin"
 import { getClusterConstants } from "../../constants"
+import { NftBucket } from "../../models/nftBucket"
 
 const getItemHeaderText = (
   metadata?: programs.metadata.Metadata,
@@ -81,7 +82,8 @@ const NftPurchasePage = () => {
 
   const [listHead] = useAccount(
     "nftBucket",
-    collection && new PublicKey(collection.data.listHead)
+    collection && new PublicKey(collection.data.listHead),
+    { subscribe: true }
   )
 
   const [pageAddresses, setPageAddresses] = useState<PublicKey[]>([])
@@ -94,13 +96,31 @@ const NftPurchasePage = () => {
         : undefined
       : pageAddresses[page - 1]
 
-  const nftBuckets = useNftBuckets(
+  const [nftBucketAddresses, nftBucketAddressesLoading] = useNftBucketAddresses(
     firstBucketAddress,
     collection ? new PublicKey(collection.data.listTail) : undefined,
     numBucketsPerPage,
     refreshFlag
   )
-  const purchaseItems = usePurchaseItems(nftBuckets)
+  const [nftBuckets] = useAccounts("nftBucket", nftBucketAddresses)
+
+  const nftBucketsList = useMemo(() => {
+    if (!nftBucketAddresses || !nftBuckets) {
+      return
+    }
+    const retval: NftBucket[] = []
+    for (let i = 0; i < nftBucketAddresses.length; i++) {
+      const key = nftBucketAddresses[i].toString()
+      const nftBucket = nftBuckets[key]
+      if (!nftBucket) {
+        return
+      }
+      retval.push(nftBucket)
+    }
+    return retval
+  }, [nftBucketAddresses, nftBuckets])
+
+  const purchaseItems = usePurchaseItems(nftBucketsList)
 
   const onLeftButtonClick = () => {
     setPage(page - 1)
@@ -108,16 +128,16 @@ const NftPurchasePage = () => {
 
   const leftButtonEnabled =
     collection &&
-    nftBuckets &&
-    nftBuckets[0].data.prevListItem !== collection.data.listHead
+    nftBucketsList &&
+    nftBucketsList[0].data.prevListItem !== collection.data.listHead
 
   const onRightButtonClick = () => {
-    if (!nftBuckets) {
+    if (!nftBucketsList) {
       return
     }
     const newPageAddresses = [...pageAddresses]
     newPageAddresses.push(
-      new PublicKey(nftBuckets[nftBuckets.length - 1].data.nextListItem)
+      new PublicKey(nftBucketsList[nftBucketsList.length - 1].data.nextListItem)
     )
     setPageAddresses(newPageAddresses)
     setPage(page + 1)
@@ -125,8 +145,8 @@ const NftPurchasePage = () => {
 
   const rightButtonEnabled =
     collection &&
-    nftBuckets &&
-    nftBuckets[nftBuckets.length - 1].data.nextListItem !==
+    nftBucketsList &&
+    nftBucketsList[nftBucketsList.length - 1].data.nextListItem !==
       collection.data.listTail
 
   const [selectedPurchaseItem, setSelectedPurchaseItem] = useState<
@@ -152,6 +172,15 @@ const NftPurchasePage = () => {
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
   const isAdmin = useIsAdmin(ADDRESS_VIBE_MARKET)
 
+  const handleNftRemoval = () => {
+    setSelectedPurchaseItem(undefined)
+    setPageAddresses(_.slice(pageAddresses, 0, page))
+    if (nftBucketsList?.length === 1) {
+      setPage(page - 1)
+    }
+    setRefreshFlag(!refreshFlag)
+  }
+
   const _purchaseNftClickHandler = useCallback(async () => {
     if (
       !anchorAccountCache.isEnabled ||
@@ -169,7 +198,7 @@ const NftPurchasePage = () => {
       selectedPurchaseItem.nftBucket.publicKey,
       new PublicKey(selectedPaymentOption)
     )
-    setRefreshFlag(!refreshFlag)
+    handleNftRemoval()
   }, [
     anchorAccountCache.isEnabled,
     wallet?.publicKey.toString(),
@@ -199,20 +228,7 @@ const NftPurchasePage = () => {
       collection.publicKey,
       selectedPurchaseItem.nftBucket.publicKey
     )
-    if (
-      firstBucketAddress &&
-      selectedPurchaseItem.nftBucket.publicKey.equals(firstBucketAddress)
-    ) {
-      setPageAddresses(
-        _.map(pageAddresses, (pageAddress) =>
-          pageAddress.equals(selectedPurchaseItem.nftBucket.publicKey)
-            ? new PublicKey(selectedPurchaseItem.nftBucket.data.nextListItem)
-            : pageAddress
-        )
-      )
-    } else {
-      setRefreshFlag(!refreshFlag)
-    }
+    handleNftRemoval()
   }, [
     anchorAccountCache.isEnabled,
     wallet?.publicKey.toString(),
@@ -229,6 +245,7 @@ const NftPurchasePage = () => {
   const tokenAccounts = useTokenAccounts(wallet?.publicKey)
   const solBalance = useBalance(anchorAccountCache, wallet?.publicKey)
 
+  console.log("render")
   return (
     <Center flexDirection="column" w="full">
       <Modal isOpen={!!selectedPurchaseItem} size="xl" onClose={modalClose}>
@@ -272,7 +289,7 @@ const NftPurchasePage = () => {
                       w="full"
                     >
                       {shortenAddress(
-                        selectedPurchaseItem.metadata.data.mint || "",
+                        selectedPurchaseItem.metadata.data.mint,
                         6
                       )}
                     </Link>
@@ -283,56 +300,63 @@ const NftPurchasePage = () => {
                     <FormLabel>Select Payment Option</FormLabel>
                     <RadioGroup
                       type="radio-payment-option"
-                      onChange={setSelectedPaymentOption.bind(this)}
+                      onChange={setSelectedPaymentOption}
                       value={selectedPaymentOption}
                     >
                       <VStack spacing="6">
                         {_.map(
                           selectedPurchaseItem.priceModel.data.salePrices,
-                          (salePrice, index) => (
-                            <Radio
-                              key={salePrice.mint.toString()}
-                              value={salePrice.mint.toString()}
-                              justifyContent="flex-start"
-                              alignSelf="flex-start"
-                            >
-                              <HStack position="relative">
-                                {tokenRegistry[salePrice.mint].logoURI && (
-                                  <Image
-                                    alt="token image"
-                                    w="4"
-                                    h="4"
-                                    borderRadius="20"
-                                    src={tokenRegistry[salePrice.mint].logoURI}
-                                  />
-                                )}
-                                <Text>{`${
-                                  tokenRegistry[salePrice.mint].symbol
-                                } ${fromRawAmount(
-                                  mints[salePrice.mint].data.decimals,
-                                  salePrice.amount
-                                )}`}</Text>
-                                <Text
-                                  position="absolute"
-                                  top="5"
-                                  m="0"
-                                  w="40"
-                                  color="grey"
-                                  fontWeight="700"
-                                  fontSize="14px"
-                                >{`Balance: ${
-                                  salePrice.mint ===
-                                  ADDRESS_NATIVE_MINT.toString()
-                                    ? solBalance?.toFixed(2)
-                                    : fromRawAmount(
-                                        mints[salePrice.mint].data.decimals,
-                                        tokenAccounts[salePrice.mint].data
-                                          .amount
-                                      )
-                                }`}</Text>
-                              </HStack>
-                            </Radio>
-                          )
+                          (salePrice, index) => {
+                            const { logoURI, symbol } =
+                              tokenRegistry[salePrice.mint]
+                            const mint = mints[salePrice.mint]
+                            let userBalance = 0
+                            if (
+                              salePrice.mint ===
+                                ADDRESS_NATIVE_MINT.toString() &&
+                              solBalance
+                            ) {
+                              userBalance = solBalance
+                            } else if (tokenAccounts[salePrice.mint]) {
+                              userBalance = fromRawAmount(
+                                mint.data.decimals,
+                                tokenAccounts[salePrice.mint].data.amount
+                              )
+                            }
+                            return (
+                              <Radio
+                                key={salePrice.mint.toString()}
+                                value={salePrice.mint.toString()}
+                                justifyContent="flex-start"
+                                alignSelf="flex-start"
+                              >
+                                <HStack position="relative">
+                                  {logoURI && (
+                                    <Image
+                                      alt="token image"
+                                      w="4"
+                                      h="4"
+                                      borderRadius="20"
+                                      src={logoURI}
+                                    />
+                                  )}
+                                  <Text>{`${symbol} ${fromRawAmount(
+                                    mints[salePrice.mint].data.decimals,
+                                    salePrice.amount
+                                  )}`}</Text>
+                                  <Text
+                                    position="absolute"
+                                    top="5"
+                                    m="0"
+                                    w="40"
+                                    color="grey"
+                                    fontWeight="700"
+                                    fontSize="14px"
+                                  >{`Balance: ${userBalance.toFixed(2)}`}</Text>
+                                </HStack>
+                              </Radio>
+                            )
+                          }
                         )}
                       </VStack>
                     </RadioGroup>
@@ -384,10 +408,10 @@ const NftPurchasePage = () => {
         columns={numColumnsPerPage}
         spacing={16}
         maxW="900px"
-        maxH="full"
+        minH="70vh"
         w="full"
       >
-        {!purchaseItems &&
+        {nftBucketAddressesLoading &&
           numBucketsPerPage &&
           _.map(_.range(numBucketsPerPage), (index) => {
             return (

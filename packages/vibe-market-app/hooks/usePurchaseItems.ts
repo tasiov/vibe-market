@@ -19,12 +19,12 @@ export type PurchaseItem = {
   staticData: any
 }
 
-export const useNftBuckets = (
+export const useNftBucketAddresses = (
   firstBucketAddress: PublicKey | undefined,
   listTailAddress: PublicKey | undefined,
   numBucketsPerPage: number | undefined,
   refreshFlag: boolean
-) => {
+): [PublicKey[] | undefined, boolean] => {
   const anchorAccountCache = useAnchorAccountCache()
   const [nftBucketAddresses, setNftBucketAddresses] = useState<
     PublicKey[] | undefined
@@ -73,23 +73,7 @@ export const useNftBuckets = (
     refreshFlag,
   ])
 
-  const [nftBucketsMap] = useAccounts("nftBucket", nftBucketAddresses, {
-    subscribe: true,
-  })
-
-  return useMemo(() => {
-    if (!nftBucketAddresses || !nftBucketsMap) {
-      return
-    }
-    return _.reduce(
-      nftBucketAddresses,
-      (accum: NftBucket[], nftBucketAddress) => {
-        accum.push(nftBucketsMap[nftBucketAddress.toString()])
-        return accum
-      },
-      []
-    )
-  }, [nftBucketAddresses, nftBucketsMap])
+  return [nftBucketAddresses, loading]
 }
 
 export const usePurchaseItems = (nftBuckets: NftBucket[] | undefined) => {
