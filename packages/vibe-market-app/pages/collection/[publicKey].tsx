@@ -113,7 +113,7 @@ const NftPurchasePage = () => {
       const key = nftBucketAddresses[i].toString()
       const nftBucket = nftBuckets[key]
       if (!nftBucket) {
-        return
+        break
       }
       retval.push(nftBucket)
     }
@@ -129,6 +129,7 @@ const NftPurchasePage = () => {
   const leftButtonEnabled =
     collection &&
     nftBucketsList &&
+    !_.isEmpty(nftBucketsList) &&
     nftBucketsList[0].data.prevListItem !== collection.data.listHead
 
   const onRightButtonClick = () => {
@@ -146,6 +147,7 @@ const NftPurchasePage = () => {
   const rightButtonEnabled =
     collection &&
     nftBucketsList &&
+    !_.isEmpty(nftBucketsList) &&
     nftBucketsList[nftBucketsList.length - 1].data.nextListItem !==
       collection.data.listTail
 
@@ -165,6 +167,9 @@ const NftPurchasePage = () => {
 
   const [mints] = useAccounts("hMint", mintAddresses, { useCache: true })
 
+  const tokenAccounts = useTokenAccounts(wallet?.publicKey)
+  const solBalance = useBalance(anchorAccountCache, wallet?.publicKey)
+
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<
     string | undefined
   >()
@@ -175,7 +180,7 @@ const NftPurchasePage = () => {
   const handleNftRemoval = () => {
     setSelectedPurchaseItem(undefined)
     setPageAddresses(_.slice(pageAddresses, 0, page))
-    if (nftBucketsList?.length === 1) {
+    if (page > 0 && nftBucketsList?.length === 1) {
       setPage(page - 1)
     }
     setRefreshFlag(!refreshFlag)
@@ -191,12 +196,14 @@ const NftPurchasePage = () => {
     ) {
       return
     }
+    const paymentTokenAccount = tokenAccounts[selectedPaymentOption]
     await purchaseNft(
       anchorAccountCache,
       wallet.publicKey,
       collection.publicKey,
       selectedPurchaseItem.nftBucket.publicKey,
-      new PublicKey(selectedPaymentOption)
+      new PublicKey(selectedPaymentOption),
+      paymentTokenAccount?.publicKey
     )
     handleNftRemoval()
   }, [
@@ -205,6 +212,7 @@ const NftPurchasePage = () => {
     collection?.publicKey.toString(),
     selectedPurchaseItem,
     selectedPaymentOption,
+    tokenAccounts,
   ])
 
   const purchaseNftClickHandler = useTxCallback(_purchaseNftClickHandler, {
@@ -242,10 +250,6 @@ const NftPurchasePage = () => {
     error: "Transaction failed",
   })
 
-  const tokenAccounts = useTokenAccounts(wallet?.publicKey)
-  const solBalance = useBalance(anchorAccountCache, wallet?.publicKey)
-
-  console.log("render")
   return (
     <Center flexDirection="column" w="full">
       <Modal isOpen={!!selectedPurchaseItem} size="xl" onClose={modalClose}>
@@ -374,7 +378,7 @@ const NftPurchasePage = () => {
                 _hover={{
                   bgColor: "brandPink.900",
                 }}
-                disabled={!selectedPaymentOption}
+                disabled={!selectedPaymentOption || !tokenAccounts}
               >
                 Buy Now
               </Button>
@@ -405,8 +409,8 @@ const NftPurchasePage = () => {
         />
       </Center>
       {!nftBucketAddressesLoading &&
-        !purchaseItems &&
-        _.isEmpty(purchaseItems) && (
+        nftBucketAddresses &&
+        _.isEmpty(nftBucketAddresses) && (
           <Center
             w="full"
             position="relative"
@@ -423,6 +427,7 @@ const NftPurchasePage = () => {
             </Text>
             <Image
               alt="token image"
+              maxW="900px"
               w="full"
               h="full"
               borderRadius="20"
@@ -430,8 +435,7 @@ const NftPurchasePage = () => {
             />
           </Center>
         )}
-      {(nftBucketAddressesLoading ||
-        (purchaseItems && !_.isEmpty(purchaseItems))) && (
+      {nftBucketAddressesLoading && numBucketsPerPage && (
         <SimpleGrid
           columns={numColumnsPerPage}
           spacing={16}
@@ -439,23 +443,32 @@ const NftPurchasePage = () => {
           minH="70vh"
           w="full"
         >
-          {nftBucketAddressesLoading &&
-            numBucketsPerPage &&
-            _.map(_.range(numBucketsPerPage), (index) => {
-              return (
-                <Skeleton
-                  key={`skeleton-${index}`}
-                  startColor="brandPink.100"
-                  endColor="brandPink.900"
-                  boxShadow="md"
-                  borderRadius="md"
-                >
-                  <Box bg="beige" h="280px" w="full"></Box>
-                </Skeleton>
-              )
-            })}
-          {purchaseItems &&
-            _.map(purchaseItems, (purchaseItem) => {
+          {_.map(_.range(numBucketsPerPage), (index) => {
+            return (
+              <Skeleton
+                key={`skeleton-${index}`}
+                startColor="brandPink.100"
+                endColor="brandPink.900"
+                boxShadow="md"
+                borderRadius="md"
+              >
+                <Box bg="beige" h="280px" w="full"></Box>
+              </Skeleton>
+            )
+          })}
+        </SimpleGrid>
+      )}
+      {!nftBucketAddressesLoading &&
+        purchaseItems &&
+        !_.isEmpty(nftBucketAddresses) && (
+          <SimpleGrid
+            columns={numColumnsPerPage}
+            spacing={16}
+            maxW="900px"
+            minH="70vh"
+            w="full"
+          >
+            {_.map(purchaseItems, (purchaseItem) => {
               const { nftBucket, priceModel, metadata, staticData } =
                 purchaseItem
               return (
@@ -532,8 +545,8 @@ const NftPurchasePage = () => {
                 </Box>
               )
             })}
-        </SimpleGrid>
-      )}
+          </SimpleGrid>
+        )}
     </Center>
   )
 }

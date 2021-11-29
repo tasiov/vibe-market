@@ -35,10 +35,7 @@ const WithdrawLiquidityPage = () => {
 
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
 
-  const [withdrawAmount, setWithdrawAmount] = useState<number | undefined>()
-  const handleAmountChange = (valueAsString: string, valueAsNumber: number) => {
-    setWithdrawAmount(valueAsNumber)
-  }
+  const [withdrawAmount, setWithdrawAmount] = useState<string | undefined>()
 
   const tokenAccounts = useTokenAccounts(ADDRESS_VIBE_MARKET)
 
@@ -59,7 +56,7 @@ const WithdrawLiquidityPage = () => {
       anchorAccountCache,
       wallet?.publicKey,
       new PublicKey(selectedTokenAccount),
-      withdrawAmount
+      parseFloat(withdrawAmount)
     )
   }, [!anchorAccountCache.isEnabled, wallet?.publicKey, selectedTokenAccount])
 
@@ -86,7 +83,7 @@ const WithdrawLiquidityPage = () => {
             defaultValue={0}
             min={0}
             keepWithinRange={true}
-            onChange={handleAmountChange}
+            onChange={setWithdrawAmount}
             m="0"
           >
             <NumberInputField />

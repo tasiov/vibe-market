@@ -23,9 +23,13 @@ import { usePriceModelAddresses } from "../../hooks/useSeedAddress"
 import { AccountViewer } from "../../components/AccountViewer"
 import { useCluster } from "../../contexts/cluster"
 
-type SalePrice = { mint: string; amount: number }
+type SalePrice = { mint: string; amount: string }
+type SalePriceNum = {
+  mint: string
+  amount: number
+}
 
-const salePriceDefault = [{ mint: "", amount: 0 }]
+const salePriceDefault = [{ mint: "", amount: "0" }]
 
 const PriceModelPage = () => {
   const cluster = useCluster()
@@ -49,18 +53,15 @@ const PriceModelPage = () => {
     newSalePrices[index].mint = event.target.value
     setSalePrices(newSalePrices)
   }
-  const handleAmountChange = (
-    index: number,
-    valueAsString: string,
-    valueAsNumber: number
-  ) => {
+
+  const handleAmountChange = (index: number, valueAsString: string) => {
     const newSalePrices = [...salePrices]
-    newSalePrices[index].amount = valueAsNumber
+    newSalePrices[index].amount = valueAsString
     setSalePrices(newSalePrices)
   }
   const handleSalePriceAdd = () => {
     const newSalePrices = [...salePrices]
-    newSalePrices.push({ mint: "", amount: 0 })
+    newSalePrices.push({ mint: "", amount: "0" })
     setSalePrices(newSalePrices)
   }
 
@@ -72,7 +73,11 @@ const PriceModelPage = () => {
     ) {
       return
     }
-    await createPriceModel(anchorAccountCache, wallet?.publicKey, salePrices)
+    const salePricesNum: SalePriceNum[] = _.map(salePrices, (salePrice) => ({
+      mint: salePrice.mint,
+      amount: parseFloat(salePrice.amount),
+    }))
+    await createPriceModel(anchorAccountCache, wallet?.publicKey, salePricesNum)
     setSalePrices(salePriceDefault)
   }, [anchorAccountCache.isEnabled, wallet?.publicKey.toString(), salePrices])
 
@@ -119,7 +124,6 @@ const PriceModelPage = () => {
                   value={salePrice.amount}
                   defaultValue={0}
                   min={0}
-                  keepWithinRange={true}
                   onChange={handleAmountChange.bind(null, index)}
                 >
                   <NumberInputField />

@@ -3,11 +3,9 @@ import BN from "bn.js"
 const decimalsExponent = (decimals: number) => new BN(10).pow(new BN(decimals))
 
 export const toRawAmount = (decimals: number, amount: number) => {
-  const bnAmount = new BN(amount)
-  return bnAmount.mul(decimalsExponent(decimals))
+  return new BN(10 ** decimals * amount)
 }
 
 export const fromRawAmount = (decimals: number, amount: number) => {
-  const bnAmount = new BN(amount)
-  return bnAmount.div(decimalsExponent(decimals)).toNumber()
+  return amount / 10 ** decimals
 }

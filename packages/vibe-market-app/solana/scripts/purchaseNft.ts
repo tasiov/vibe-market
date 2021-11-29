@@ -16,7 +16,8 @@ const purchaseNft = async (
   walletPublicKey: PublicKey,
   collectionPublicKey: PublicKey,
   nftBucketPublicKey: PublicKey,
-  paymentMintPublicKey: PublicKey
+  paymentMintPublicKey: PublicKey,
+  paymentTokenAccount?: PublicKey
 ) => {
   const {
     ADDRESS_NATIVE_MINT,
@@ -68,9 +69,13 @@ const purchaseNft = async (
   const priceModelAddress = new PublicKey(nftBucket.data.priceModel)
 
   const tx = new Transaction()
-  const newAccount = Keypair.generate()
+  let newAccount: Keypair | undefined
+  let paymentAccountAddress: PublicKey
 
   if (paymentMintPublicKey.equals(ADDRESS_NATIVE_MINT)) {
+    newAccount = Keypair.generate()
+    paymentAccountAddress = newAccount.publicKey
+
     const priceModel = await anchorAccountCache.fetch(
       "priceModel",
       priceModelAddress
@@ -105,6 +110,11 @@ const purchaseNft = async (
         walletPublicKey
       )
     )
+  } else {
+    if (!paymentTokenAccount) {
+      throw new Error("Token account not provided")
+    }
+    paymentAccountAddress = paymentTokenAccount
   }
 
   const purchaseIx =
@@ -117,7 +127,7 @@ const purchaseNft = async (
         collection: collectionPublicKey,
         purchaseListItem: nftBucketPublicKey,
         debitMint: paymentMintPublicKey,
-        debitAccount: newAccount.publicKey,
+        debitAccount: paymentAccountAddress,
         programCreditAccount: programCreditAccountAddress,
         programNftAccount: programNftAccountAddress,
         programNftMint: nftMintAddress,
