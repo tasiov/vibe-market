@@ -19,6 +19,6 @@
     "migrate": "ANCHOR_WALLET=./devnet-wallet.json yarn ts-node .anchor/deploy.ts",
     "devnet-balance": "solana balance -u d ./devnet-wallet.json",
     "devnet-airdrop": "solana airdrop 5 -u d ./devnet-wallet.json",
-    "devnet-deploy": "anchor deploy; anchor idl upgrade VBMXoEzW3FuMarn35AjTg8v32md7aPdh6N3EkEG6noL -f target/idl/vibe_market.json;"
+    "devnet-deploy": "anchor deploy; anchor idl upgrade VBMhjPxG5qNFGfR7tsSxTHq4FtAvjrU5mt4p8k4hZpY -f target/idl/vibe_market.json;"
   }
 }

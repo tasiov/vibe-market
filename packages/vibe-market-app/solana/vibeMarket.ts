@@ -284,13 +284,13 @@ export type VibeMarket = {
       accounts: [
         {
           name: "admin"
-          isMut: true
+          isMut: false
           isSigner: true
         },
         {
           name: "rentRefund"
-          isMut: false
-          isSigner: true
+          isMut: true
+          isSigner: false
         },
         {
           name: "priceModel"
@@ -365,13 +365,13 @@ export type VibeMarket = {
       accounts: [
         {
           name: "owner"
-          isMut: true
+          isMut: false
           isSigner: true
         },
         {
           name: "rentRefund"
-          isMut: false
-          isSigner: true
+          isMut: true
+          isSigner: false
         },
         {
           name: "priceModel"
@@ -395,7 +395,7 @@ export type VibeMarket = {
         },
         {
           name: "debitMint"
-          isMut: true
+          isMut: false
           isSigner: false
         },
         {
@@ -1037,13 +1037,13 @@ export const IDL: VibeMarket = {
       accounts: [
         {
           name: "admin",
-          isMut: true,
+          isMut: false,
           isSigner: true,
         },
         {
           name: "rentRefund",
-          isMut: false,
-          isSigner: true,
+          isMut: true,
+          isSigner: false,
         },
         {
           name: "priceModel",
@@ -1118,13 +1118,13 @@ export const IDL: VibeMarket = {
       accounts: [
         {
           name: "owner",
-          isMut: true,
+          isMut: false,
           isSigner: true,
         },
         {
           name: "rentRefund",
-          isMut: false,
-          isSigner: true,
+          isMut: true,
+          isSigner: false,
         },
         {
           name: "priceModel",
@@ -1148,7 +1148,7 @@ export const IDL: VibeMarket = {
         },
         {
           name: "debitMint",
-          isMut: true,
+          isMut: false,
           isSigner: false,
         },
         {

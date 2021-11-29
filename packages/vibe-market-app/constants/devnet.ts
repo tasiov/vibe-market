@@ -1,9 +1,9 @@
 import { PublicKey } from "@solana/web3.js"
 
 export const ADDRESS_VIBE_MARKET = new PublicKey(
-  "2BRhfeGobPspj3AcPFQgn9a7SwwzCJ22vWbJXoH6XMYj"
+  "Hx2nNawP1GE1H4RQDSLGtzE1sNock6VoSmCbTXgcpe8z"
 )
 
 export const PROGRAM_VIBE_MARKET = new PublicKey(
-  "VBMXoEzW3FuMarn35AjTg8v32md7aPdh6N3EkEG6noL"
+  "VBMhjPxG5qNFGfR7tsSxTHq4FtAvjrU5mt4p8k4hZpY"
 )

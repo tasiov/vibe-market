@@ -73,12 +73,16 @@ module.exports = async function (provider) {
   // const [globalStateAddress, globalStateAddressNonce] =
   //   await seedAddresses.getGlobalStateAddress()
 
-  console.log(
-    await vibeMarketProgram.account.globalState.fetch(globalStateAddress)
+  const globalState = await vibeMarketProgram.account.globalState.fetch(
+    globalStateAddress
   )
   console.log("globalStateAddress", globalStateAddress.toString())
 
-  const marketAddress = await initMarket(vibeMarketProgram, walletPublicKey, 0)
+  const marketAddress = await initMarket(
+    vibeMarketProgram,
+    walletPublicKey,
+    globalState.numMarkets
+  )
   console.log(await vibeMarketProgram.account.market.fetch(marketAddress))
   console.log("marketAddress", marketAddress.toString())
 
