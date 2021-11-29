@@ -1,7 +1,12 @@
 import { assert } from "chai"
 import * as anchor from "@project-serum/anchor"
-import { Program } from "@project-serum/anchor"
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
+import { Program, Wallet } from "@project-serum/anchor"
+import {
+  PublicKey,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+  Transaction,
+} from "@solana/web3.js"
 import {
   Token,
   TOKEN_PROGRAM_ID,
@@ -538,29 +543,39 @@ describe("vibe-market", () => {
       nftBucket.publicKey
     )
 
-    await program.rpc.purchaseNft({
-      accounts: {
-        owner: user.publicKey,
-        rentRefund: admin.publicKey,
-        priceModel: priceModelAddress,
-        market: marketAddress,
-        collection: collectionAddress,
-        purchaseListItem: nftBucket.publicKey,
-        debitMint: paymentMint.publicKey,
-        debitAccount: userPaymentAccountAddress,
-        programCreditAccount: programCreditAccountAddress,
-        programNftAccount: programNftAccountAddress,
-        programNftMint: nftMint.publicKey,
-        ownerNftAccount: userNftAccountAddress,
-        prevListItem: nftBucketAccount.prevListItem,
-        nextListItem: nftBucketAccount.nextListItem,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        rent: SYSVAR_RENT_PUBKEY,
-      },
-      signers: [user],
-    })
+    const tx = new Transaction()
+    tx.add(
+      await program.instruction.purchaseNft({
+        accounts: {
+          owner: user.publicKey,
+          rentRefund: admin.publicKey,
+          priceModel: priceModelAddress,
+          market: marketAddress,
+          collection: collectionAddress,
+          purchaseListItem: nftBucket.publicKey,
+          debitMint: paymentMint.publicKey,
+          debitAccount: userPaymentAccountAddress,
+          programCreditAccount: programCreditAccountAddress,
+          programNftAccount: programNftAccountAddress,
+          programNftMint: nftMint.publicKey,
+          ownerNftAccount: userNftAccountAddress,
+          prevListItem: nftBucketAccount.prevListItem,
+          nextListItem: nftBucketAccount.nextListItem,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          rent: SYSVAR_RENT_PUBKEY,
+        },
+      })
+    )
+
+    const userProvider = new anchor.Provider(
+      program.provider.connection,
+      new Wallet(user),
+      {}
+    )
+
+    await userProvider.send(tx)
 
     try {
       await program.account.nftBucket.fetch(nftBucket.publicKey)

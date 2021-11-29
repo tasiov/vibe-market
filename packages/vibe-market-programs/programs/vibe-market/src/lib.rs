@@ -9,7 +9,7 @@ use anchor_spl::associated_token::{
     self, AssociatedToken,
 };
 
-declare_id!("VBMXoEzW3FuMarn35AjTg8v32md7aPdh6N3EkEG6noL");
+declare_id!("VBMhjPxG5qNFGfR7tsSxTHq4FtAvjrU5mt4p8k4hZpY");
 
 const ADMIN_WHITELIST_MAX_LEN: usize = 16;
 
@@ -512,10 +512,9 @@ pub struct AddNft<'info> {
 
 #[derive(Accounts)]
 pub struct WithdrawNft<'info> {
-    #[account(mut)]
     admin: Signer<'info>,
-    #[account(address = withdraw_list_item.payer)]
-    rent_refund: Signer<'info>,
+    #[account(mut, address = withdraw_list_item.payer)]
+    rent_refund: UncheckedAccount<'info>,
     #[account(address = withdraw_list_item.price_model)]
     price_model: Box<Account<'info, PriceModel>>,
     #[account(address = price_model.market)]
@@ -567,10 +566,9 @@ pub struct WithdrawNft<'info> {
 
 #[derive(Accounts)]
 pub struct PurchaseNft<'info> {
-    #[account(mut)]
     owner: Signer<'info>,
-    #[account(address = purchase_list_item.payer)]
-    rent_refund: Signer<'info>,
+    #[account(mut, address = purchase_list_item.payer)]
+    rent_refund: UncheckedAccount<'info>,
     #[account(address = purchase_list_item.price_model)]
     price_model: Box<Account<'info, PriceModel>>,
     #[account(address = price_model.market)]
@@ -586,7 +584,7 @@ pub struct PurchaseNft<'info> {
     collection: Box<Account<'info, Collection>>,
     #[account(mut, close = rent_refund)]
     purchase_list_item: Box<Account<'info, NftBucket>>,
-    #[account(mut, address = debit_account.mint)]
+    #[account(address = debit_account.mint)]
     debit_mint: Box<Account<'info, Mint>>,
     #[account(mut, has_one = owner)]
     debit_account: Box<Account<'info, TokenAccount>>,
