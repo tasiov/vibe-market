@@ -1,12 +1,12 @@
 [programs.localnet]
-vibe_market = "VBMhjPxG5qNFGfR7tsSxTHq4FtAvjrU5mt4p8k4hZpY"
+vibe_market = "vXXYKPPwmERsfQPKEwhmnQBABVDoLUKRzz5LtLk9ndS"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
-wallet = "./devnet-wallet.json"
+cluster = "mainnet"
+wallet = "./mainnet-wallet.json"
 
 [scripts]
 test = "yarn ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

@@ -16,9 +16,10 @@
   },
   "scripts": {
     "test": "anchor test --provider.cluster localnet",
-    "migrate": "ANCHOR_WALLET=./devnet-wallet.json yarn ts-node .anchor/deploy.ts",
+    "devnet-migrate": "ANCHOR_WALLET=./devnet-wallet.json yarn ts-node .anchor/deploy.ts",
     "devnet-balance": "solana balance -u d ./devnet-wallet.json",
     "devnet-airdrop": "solana airdrop 5 -u d ./devnet-wallet.json",
-    "devnet-deploy": "anchor deploy; anchor idl upgrade VBMhjPxG5qNFGfR7tsSxTHq4FtAvjrU5mt4p8k4hZpY -f target/idl/vibe_market.json;"
+    "mainnet-migrate": "ANCHOR_WALLET=./mainnet-wallet.json yarn ts-node .anchor/deploy.ts",
+    "mainnet-balance": "solana balance -u m ./mainnet-wallet.json"
   }
 }

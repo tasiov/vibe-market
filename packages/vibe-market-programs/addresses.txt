@@ -1,2 +1,4 @@
-vibe-market program: VBMhjPxG5qNFGfR7tsSxTHq4FtAvjrU5mt4p8k4hZpY
-vibe-market idl: 75jc4otnbQUPxriMzJYz8ZgnxMoKmoNoHM9PpBBcgQ9P
+devnet vibe-market program: VBMhjPxG5qNFGfR7tsSxTHq4FtAvjrU5mt4p8k4hZpY
+devnet vibe-market idl: 75jc4otnbQUPxriMzJYz8ZgnxMoKmoNoHM9PpBBcgQ9P
+
+mainnet vibe-market program: vXXYKPPwmERsfQPKEwhmnQBABVDoLUKRzz5LtLk9ndS

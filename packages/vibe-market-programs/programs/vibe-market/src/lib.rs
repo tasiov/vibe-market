@@ -9,7 +9,7 @@ use anchor_spl::associated_token::{
     self, AssociatedToken,
 };
 
-declare_id!("VBMhjPxG5qNFGfR7tsSxTHq4FtAvjrU5mt4p8k4hZpY");
+declare_id!("vXXYKPPwmERsfQPKEwhmnQBABVDoLUKRzz5LtLk9ndS");
 
 const ADMIN_WHITELIST_MAX_LEN: usize = 16;
 
