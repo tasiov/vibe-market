@@ -17,7 +17,7 @@ module.exports = withTM({
     return [
       {
         source: "/",
-        destination: "/collection/9BZ8qv66erfbNd9ptaBXPVUhbvXjmq5dwHrEFekaypjv",
+        destination: "/collection/3qiPENDHHE6F9qwiy4JYGA38JLbowz3Fvn9XVivoJC3a",
         permanent: false,
       },
     ]

@@ -1,5 +1,6 @@
 import { PublicKey } from "@solana/web3.js"
 import _ from "lodash"
+import * as MainnetConstants from "./mainnetBeta"
 import * as DevnetConstants from "./devnet"
 import * as SharedConstants from "./shared"
 
@@ -7,9 +8,10 @@ export const Shared = SharedConstants
 
 const CLUSTER_MAP = {
   devnet: DevnetConstants,
+  "mainnet-beta": MainnetConstants,
 }
 
-const DEFAULT_CLUSTER = "devnet"
+const DEFAULT_CLUSTER = "mainnet-beta"
 
 export type ClusterKey = keyof typeof CLUSTER_MAP
 
