@@ -58,7 +58,12 @@ const WithdrawLiquidityPage = () => {
       new PublicKey(selectedTokenAccount),
       parseFloat(withdrawAmount)
     )
-  }, [!anchorAccountCache.isEnabled, wallet?.publicKey, selectedTokenAccount])
+  }, [
+    !anchorAccountCache.isEnabled,
+    wallet?.publicKey,
+    selectedTokenAccount,
+    withdrawAmount,
+  ])
 
   const withdrawLiquidityClickHandler = useTxCallback(
     _withdrawLiquidityClickHandler,
