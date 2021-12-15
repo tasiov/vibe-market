@@ -1,4 +1,5 @@
 import _ from "lodash"
+import BN from "bn.js"
 import { Connection, PublicKey } from "@solana/web3.js"
 import { BaseRawAccount, BaseRawAccountManager } from "./baseRaw"
 import { MintLayout, u64 } from "@solana/spl-token"
@@ -8,7 +9,7 @@ export const AccountType = "hMint"
 export interface HMintAccount {
   decimals: number
   mintAuthorityOption: number
-  supply: number
+  supply: BN
   freezeAuthorityOption: number
   isInitialized: boolean
   mintAuthority: string | undefined
@@ -26,7 +27,7 @@ export class HMintManager extends BaseRawAccountManager<HMintAccount, HMint> {
     return (
       typeof entity.data.decimals === "number" &&
       typeof entity.data.mintAuthorityOption === "number" &&
-      typeof entity.data.supply === "number" &&
+      entity.data.supply instanceof BN &&
       typeof entity.data.freezeAuthorityOption === "number" &&
       typeof entity.data.isInitialized === "boolean" &&
       (entity.data.mintAuthority === undefined ||
@@ -46,7 +47,7 @@ export class HMintManager extends BaseRawAccountManager<HMintAccount, HMint> {
       mintInfo.mintAuthority = new PublicKey(mintInfo.mintAuthority).toString()
     }
 
-    mintInfo.supply = u64.fromBuffer(mintInfo.supply).toNumber()
+    mintInfo.supply = u64.fromBuffer(mintInfo.supply).clone()
     mintInfo.isInitialized = mintInfo.isInitialized != 0
 
     if (mintInfo.freezeAuthorityOption === 0) {
