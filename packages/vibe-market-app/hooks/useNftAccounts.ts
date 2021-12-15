@@ -4,6 +4,7 @@ import { PublicKey } from "@solana/web3.js"
 import { HToken } from "../models"
 import { AnchorAccountCacheContext } from "../contexts/AnchorAccountsCacheProvider"
 import { useAccounts } from "./useAccounts"
+import { BN } from "@project-serum/anchor"
 
 export const useNftAccounts = (ownerPublicKey: PublicKey | undefined) => {
   const anchorAccountCache = useContext(AnchorAccountCacheContext)
@@ -54,7 +55,7 @@ export const useNftAccounts = (ownerPublicKey: PublicKey | undefined) => {
         if (
           tokenAccount.data.amount === 1 &&
           mint.data.decimals === 0 &&
-          mint.data.supply === 1
+          mint.data.supply.eq(new BN(1))
         ) {
           accum[tokenAccount.publicKey.toString()] = tokenAccount
         }
