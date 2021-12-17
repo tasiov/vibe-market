@@ -11,7 +11,7 @@ import {
   getSlopeWallet,
   getLedgerWallet,
 } from "@solana/wallet-adapter-wallets"
-import { useCluster, ClusterContextProvider } from "./cluster"
+import { useCluster } from "./cluster"
 import { FC, useMemo } from "react"
 
 const RPC_POOL_CLUSTER_MAP = {
@@ -40,13 +40,11 @@ const WalletConnectionProvider: FC = ({ children }) => {
   )
 
   return (
-    <ClusterContextProvider>
-      <ConnectionProvider endpoint={endpoint}>
-        <WalletProvider wallets={wallets} autoConnect>
-          {children}
-        </WalletProvider>
-      </ConnectionProvider>
-    </ClusterContextProvider>
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        {children}
+      </WalletProvider>
+    </ConnectionProvider>
   )
 }
 

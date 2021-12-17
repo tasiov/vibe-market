@@ -23,17 +23,21 @@ const WalletConnectionProvider = dynamic(
 const AccountsCacheProvidersSetup = ({ children }: { children: ReactNode }) => {
   const { connection } = useConnection()
   const wallet = useAnchorWallet()
-  const [vibeMarketProgram, setVibeMarketProgram] =
-    useState<Program<VibeMarket> | null>(null)
+  const [vibeMarketProgram, setVibeMarketProgram] = useState<
+    Program<VibeMarket> | undefined
+  >()
 
   useEffect(() => {
+    if (!connection) {
+      return
+    }
     ;(async function () {
       // @ts-ignore - calling provider without wallet is used to instantiate connection
       const provider = new Provider(connection, wallet, {})
       const vibeMarketProgram = await getVibeMarketProgram(provider)
       setVibeMarketProgram(vibeMarketProgram)
     })()
-  }, [wallet?.publicKey.toString()])
+  }, [connection, wallet])
 
   if (!vibeMarketProgram) {
     return <>{children}</>
