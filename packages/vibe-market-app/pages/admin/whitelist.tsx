@@ -5,7 +5,7 @@ import { useAccount } from "../../hooks/useAccounts"
 import { getClusterConstants } from "../../constants"
 import addAdmin from "../../solana/scripts/addAdmin"
 import removeAdmin from "../../solana/scripts/removeAdmin"
-import { useAnchorWallet } from "@solana/wallet-adapter-react"
+import useWalletPublicKey from "../../hooks/useWalletPublicKey"
 import { useCallback, useState } from "react"
 import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvider"
 import useTxCallback from "../../hooks/useTxCallback"
@@ -15,7 +15,7 @@ const WhitelistPage = () => {
   const { ADDRESS_VIBE_MARKET } = getClusterConstants("ADDRESS_VIBE_MARKET")
   const [market] = useAccount("market", ADDRESS_VIBE_MARKET)
 
-  const wallet = useAnchorWallet()
+  const walletPublicKey = useWalletPublicKey()
   const anchorAccountCache = useAnchorAccountCache()
 
   const [addPublicKey, setAddPublicKey] = useState("")
@@ -26,19 +26,19 @@ const WhitelistPage = () => {
   const handleRemoveChange = (event: React.ChangeEvent<HTMLInputElement>) =>
     setRemovePublicKey(event.target.value)
 
-  const buttonDisabled = !anchorAccountCache.isEnabled || !wallet?.publicKey
+  const buttonDisabled = !anchorAccountCache.isEnabled || !walletPublicKey
 
   const _addAdminClickHandler = useCallback(async () => {
-    if (!anchorAccountCache.isEnabled || !wallet?.publicKey || !addPublicKey) {
+    if (!anchorAccountCache.isEnabled || !walletPublicKey || !addPublicKey) {
       return
     }
     await addAdmin(
       anchorAccountCache,
-      wallet?.publicKey,
+      walletPublicKey,
       new PublicKey(addPublicKey)
     )
     setAddPublicKey("")
-  }, [!anchorAccountCache.isEnabled, wallet?.publicKey, addPublicKey])
+  }, [!anchorAccountCache.isEnabled, walletPublicKey, addPublicKey])
 
   const addAdminClickHandler = useTxCallback(_addAdminClickHandler, {
     info: "Adding admin...",
@@ -47,20 +47,16 @@ const WhitelistPage = () => {
   })
 
   const _removeAdminClickHandler = useCallback(async () => {
-    if (
-      !anchorAccountCache.isEnabled ||
-      !wallet?.publicKey ||
-      !removePublicKey
-    ) {
+    if (!anchorAccountCache.isEnabled || !walletPublicKey || !removePublicKey) {
       return
     }
     await removeAdmin(
       anchorAccountCache,
-      wallet?.publicKey,
+      walletPublicKey,
       new PublicKey(removePublicKey)
     )
     setRemovePublicKey("")
-  }, [!anchorAccountCache.isEnabled, wallet?.publicKey, removePublicKey])
+  }, [!anchorAccountCache.isEnabled, walletPublicKey, removePublicKey])
 
   const removeAdminClickHandler = useTxCallback(_removeAdminClickHandler, {
     info: "Removing admin...",

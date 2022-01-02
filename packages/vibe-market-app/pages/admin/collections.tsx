@@ -6,7 +6,7 @@ import { getClusterConstants } from "../../constants"
 import { useCollectionAddresses } from "../../hooks/useSeedAddress"
 import createCollection from "../../solana/scripts/createCollection"
 import closeCollection from "../../solana/scripts/closeCollection"
-import { useAnchorWallet } from "@solana/wallet-adapter-react"
+import useWalletPublicKey from "../../hooks/useWalletPublicKey"
 import { useCallback, useState } from "react"
 import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvider"
 import useTxCallback from "../../hooks/useTxCallback"
@@ -14,7 +14,7 @@ import { PublicKey } from "@solana/web3.js"
 import { AccountViewer } from "../../components/AccountViewer"
 
 const CollectionsPage = () => {
-  const wallet = useAnchorWallet()
+  const walletPublicKey = useWalletPublicKey()
   const anchorAccountCache = useAnchorAccountCache()
 
   const [title, setTitle] = useState("")
@@ -27,15 +27,15 @@ const CollectionsPage = () => {
   })
 
   const createCollectionButtonDisabled =
-    !anchorAccountCache.isEnabled || !wallet?.publicKey
+    !anchorAccountCache.isEnabled || !walletPublicKey
 
   const _createCollectionClickHandler = useCallback(async () => {
-    if (!anchorAccountCache.isEnabled || !wallet?.publicKey) {
+    if (!anchorAccountCache.isEnabled || !walletPublicKey) {
       return
     }
-    await createCollection(anchorAccountCache, wallet?.publicKey, title)
+    await createCollection(anchorAccountCache, walletPublicKey, title)
     setTitle("")
-  }, [!anchorAccountCache.isEnabled, wallet?.publicKey, title])
+  }, [!anchorAccountCache.isEnabled, walletPublicKey, title])
 
   const createCollectionClickHandler = useTxCallback(
     _createCollectionClickHandler,
@@ -58,19 +58,19 @@ const CollectionsPage = () => {
   const _closeCollectionClickHandler = useCallback(async () => {
     if (
       !anchorAccountCache.isEnabled ||
-      !wallet?.publicKey ||
+      !walletPublicKey ||
       !collectionAddress
     ) {
       return
     }
     await closeCollection(
       anchorAccountCache,
-      wallet?.publicKey,
+      walletPublicKey,
       new PublicKey(collectionAddress)
     )
   }, [
     anchorAccountCache.isEnabled,
-    wallet?.publicKey.toString(),
+    walletPublicKey?.toString(),
     collectionAddress?.toString(),
   ])
 

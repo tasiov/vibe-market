@@ -24,17 +24,18 @@ import {
   useCollectionAddresses,
 } from "../../hooks/useSeedAddress"
 import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvider"
-import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react"
+import { useConnection } from "@solana/wallet-adapter-react"
 import { fromRawAmount } from "../../solana/tokenConversion"
 import { useNftAccounts } from "../../hooks/useNftAccounts"
 import { useMetaplexMetadata } from "../../hooks/useMetaplexMetadata"
 import useTxCallback from "../../hooks/useTxCallback"
 import addNft from "../../solana/scripts/addNft"
 import { useTokenRegistry } from "../../hooks/useTokenRegistry"
+import useWalletPublicKey from "../../hooks/useWalletPublicKey"
 
 const AddNftPage = () => {
   const { connection } = useConnection()
-  const wallet = useAnchorWallet()
+  const walletPublicKey = useWalletPublicKey()
   const anchorAccountCache = useAnchorAccountCache()
   const tokenRegistry = useTokenRegistry()
 
@@ -99,7 +100,7 @@ const AddNftPage = () => {
     { useCache: true }
   )
 
-  const nftAccounts = useNftAccounts(wallet?.publicKey)
+  const nftAccounts = useNftAccounts(walletPublicKey)
 
   const [selectedNft, setSelectedNft] = useState<string | undefined>()
   const handleNftChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -116,7 +117,7 @@ const AddNftPage = () => {
   const _addNftClickHandler = useCallback(async () => {
     if (
       !anchorAccountCache.isEnabled ||
-      !wallet?.publicKey ||
+      !walletPublicKey ||
       !selectedCollection ||
       !selectedPriceModel ||
       !selectedNft
@@ -125,14 +126,14 @@ const AddNftPage = () => {
     }
     await addNft(
       anchorAccountCache,
-      wallet?.publicKey,
+      walletPublicKey,
       new PublicKey(selectedCollection),
       new PublicKey(selectedPriceModel),
       new PublicKey(selectedNft)
     )
   }, [
     anchorAccountCache.isEnabled,
-    wallet?.publicKey.toString(),
+    walletPublicKey?.toString(),
     selectedCollection,
     selectedPriceModel,
     selectedNft,
@@ -146,7 +147,7 @@ const AddNftPage = () => {
 
   const disabledButton =
     !anchorAccountCache.isEnabled ||
-    !wallet?.publicKey ||
+    !walletPublicKey ||
     !selectedCollection ||
     !selectedPriceModel ||
     !selectedNft ||

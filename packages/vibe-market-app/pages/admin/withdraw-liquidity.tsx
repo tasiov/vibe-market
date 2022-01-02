@@ -21,7 +21,7 @@ import { getClusterConstants } from "../../constants"
 import { useTokenAccounts } from "../../hooks/useTokenAccounts"
 import { useState, useCallback } from "react"
 import { PublicKey } from "@solana/web3.js"
-import { useAnchorWallet } from "@solana/wallet-adapter-react"
+import useWalletPublicKey from "../../hooks/useWalletPublicKey"
 import { fromRawAmount } from "../../solana/tokenConversion"
 import useTxCallback from "../../hooks/useTxCallback"
 import { useTokenRegistry } from "../../hooks/useTokenRegistry"
@@ -29,7 +29,7 @@ import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvide
 import withdrawLiquidity from "../../solana/scripts/withdrawLiquidity"
 
 const WithdrawLiquidityPage = () => {
-  const wallet = useAnchorWallet()
+  const walletPublicKey = useWalletPublicKey()
   const anchorAccountCache = useAnchorAccountCache()
   const tokenRegistry = useTokenRegistry()
 
@@ -46,7 +46,7 @@ const WithdrawLiquidityPage = () => {
   const _withdrawLiquidityClickHandler = useCallback(async () => {
     if (
       !anchorAccountCache.isEnabled ||
-      !wallet?.publicKey ||
+      !walletPublicKey ||
       !selectedTokenAccount ||
       !withdrawAmount
     ) {
@@ -54,13 +54,13 @@ const WithdrawLiquidityPage = () => {
     }
     await withdrawLiquidity(
       anchorAccountCache,
-      wallet?.publicKey,
+      walletPublicKey,
       new PublicKey(selectedTokenAccount),
       parseFloat(withdrawAmount)
     )
   }, [
     !anchorAccountCache.isEnabled,
-    wallet?.publicKey,
+    walletPublicKey,
     selectedTokenAccount,
     withdrawAmount,
   ])
@@ -75,7 +75,7 @@ const WithdrawLiquidityPage = () => {
   )
 
   const buttonDisabled =
-    !wallet?.publicKey || !selectedTokenAccount || !withdrawAmount
+    !walletPublicKey || !selectedTokenAccount || !withdrawAmount
 
   return (
     <Center flexDirection="column" mb="16" w="full">

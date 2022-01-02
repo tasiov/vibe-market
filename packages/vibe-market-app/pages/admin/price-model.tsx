@@ -14,7 +14,7 @@ import { Center, VStack, StackDivider, Box } from "@chakra-ui/layout"
 import { useAccount } from "../../hooks/useAccounts"
 import { getClusterConstants } from "../../constants"
 import createPriceModel from "../../solana/scripts/createPriceModel"
-import { useAnchorWallet } from "@solana/wallet-adapter-react"
+import useWalletPublicKey from "../../hooks/useWalletPublicKey"
 import { useCallback, useState } from "react"
 import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvider"
 import useTxCallback from "../../hooks/useTxCallback"
@@ -33,7 +33,7 @@ const salePriceDefault = [{ mint: "", amount: "0" }]
 
 const PriceModelPage = () => {
   const cluster = useCluster()
-  const wallet = useAnchorWallet()
+  const walletPublicKey = useWalletPublicKey()
   const anchorAccountCache = useAnchorAccountCache()
 
   const { ADDRESS_NATIVE_MINT, ADDRESS_VIBE_MARKET } = getClusterConstants(
@@ -68,7 +68,7 @@ const PriceModelPage = () => {
   const _createPriceModelClickHandler = useCallback(async () => {
     if (
       !anchorAccountCache.isEnabled ||
-      !wallet?.publicKey ||
+      !walletPublicKey ||
       !salePrices.length
     ) {
       return
@@ -77,9 +77,9 @@ const PriceModelPage = () => {
       mint: salePrice.mint,
       amount: parseFloat(salePrice.amount),
     }))
-    await createPriceModel(anchorAccountCache, wallet?.publicKey, salePricesNum)
+    await createPriceModel(anchorAccountCache, walletPublicKey, salePricesNum)
     setSalePrices(salePriceDefault)
-  }, [anchorAccountCache.isEnabled, wallet?.publicKey.toString(), salePrices])
+  }, [anchorAccountCache.isEnabled, walletPublicKey?.toString(), salePrices])
 
   const createPriceModelClickHandler = useTxCallback(
     _createPriceModelClickHandler,

@@ -38,7 +38,7 @@ import { fromRawAmount } from "../../solana/tokenConversion"
 import useTxCallback from "../../hooks/useTxCallback"
 import purchaseNft from "../../solana/scripts/purchaseNft"
 import withdrawNft from "../../solana/scripts/withdrawNft"
-import { useAnchorWallet } from "@solana/wallet-adapter-react"
+import useWalletPublicKey from "../../hooks/useWalletPublicKey"
 import { useAnchorAccountCache } from "../../contexts/AnchorAccountsCacheProvider"
 import { useTokenAccounts } from "../../hooks/useTokenAccounts"
 import { useBalance } from "../../hooks/useBalance"
@@ -66,7 +66,7 @@ const NftPurchasePage = () => {
   const numBucketsPerPage = useBreakpointValue({ base: 2, sm: 4, lg: 6 })
   const numColumnsPerPage = useBreakpointValue({ base: 1, sm: 2, lg: 3 })
 
-  const wallet = useAnchorWallet()
+  const walletPublicKey = useWalletPublicKey()
   const anchorAccountCache = useAnchorAccountCache()
 
   const [refreshFlag, setRefreshFlag] = useState(false)
@@ -167,8 +167,8 @@ const NftPurchasePage = () => {
 
   const [mints] = useAccounts("hMint", mintAddresses, { useCache: true })
 
-  const tokenAccounts = useTokenAccounts(wallet?.publicKey)
-  const solBalance = useBalance(anchorAccountCache, wallet?.publicKey)
+  const tokenAccounts = useTokenAccounts(walletPublicKey)
+  const solBalance = useBalance(anchorAccountCache, walletPublicKey)
 
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<
     string | undefined
@@ -189,7 +189,7 @@ const NftPurchasePage = () => {
   const _purchaseNftClickHandler = useCallback(async () => {
     if (
       !anchorAccountCache.isEnabled ||
-      !wallet?.publicKey ||
+      !walletPublicKey ||
       !collection ||
       !selectedPurchaseItem ||
       !selectedPaymentOption
@@ -199,7 +199,7 @@ const NftPurchasePage = () => {
     const paymentTokenAccount = tokenAccounts[selectedPaymentOption]
     await purchaseNft(
       anchorAccountCache,
-      wallet.publicKey,
+      walletPublicKey,
       collection.publicKey,
       selectedPurchaseItem.nftBucket.publicKey,
       new PublicKey(selectedPaymentOption),
@@ -208,7 +208,7 @@ const NftPurchasePage = () => {
     handleNftRemoval()
   }, [
     anchorAccountCache.isEnabled,
-    wallet?.publicKey.toString(),
+    walletPublicKey?.toString(),
     collection?.publicKey.toString(),
     selectedPurchaseItem,
     selectedPaymentOption,
@@ -224,7 +224,7 @@ const NftPurchasePage = () => {
   const _withdrawNftClickHandler = useCallback(async () => {
     if (
       !anchorAccountCache.isEnabled ||
-      !wallet?.publicKey ||
+      !walletPublicKey ||
       !collection ||
       !selectedPurchaseItem
     ) {
@@ -232,14 +232,14 @@ const NftPurchasePage = () => {
     }
     await withdrawNft(
       anchorAccountCache,
-      wallet.publicKey,
+      walletPublicKey,
       collection.publicKey,
       selectedPurchaseItem.nftBucket.publicKey
     )
     handleNftRemoval()
   }, [
     anchorAccountCache.isEnabled,
-    wallet?.publicKey.toString(),
+    walletPublicKey?.toString(),
     collection?.publicKey.toString(),
     selectedPurchaseItem,
   ])

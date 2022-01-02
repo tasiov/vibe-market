@@ -1,19 +1,19 @@
 import _ from "lodash"
 import { PublicKey } from "@solana/web3.js"
-import { useAnchorWallet } from "@solana/wallet-adapter-react"
+import useWalletPublicKey from "../hooks/useWalletPublicKey"
 import { useAccount } from "./useAccounts"
 import { useMemo } from "react"
 
 export function useIsAdmin(marketAddress: PublicKey) {
-  const wallet = useAnchorWallet()
+  const walletPublicKey = useWalletPublicKey()
   const [market] = useAccount("market", marketAddress, { subscribe: true })
 
   const isAdmin = useMemo(() => {
-    if (!wallet || !market) {
+    if (!walletPublicKey || !market) {
       return false
     }
-    return _.includes(market.data.whitelist, wallet.publicKey.toString())
-  }, [wallet, market])
+    return _.includes(market.data.whitelist, walletPublicKey.toString())
+  }, [walletPublicKey, market])
 
   return isAdmin
 }
