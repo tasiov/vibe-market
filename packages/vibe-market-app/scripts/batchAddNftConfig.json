@@ -1,0 +1,7 @@
+{
+  "cluster": "devnet",
+  "keypair": "./devnet-wallet.json",
+  "collectionAddress": "3LU3zDUMX9ca6Qsf2RtDL5XAfeYzvCoAW5Uu3PjjnFBr",
+  "priceModelAddress": "AqzVPF7G2aUCEA4fDpqzvQ3UiXLr2xNEiCjmPAb39Qxz",
+  "preview": false
+}
